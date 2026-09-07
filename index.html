@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบจองคิวร้านตัดผม</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-page:#F6F3F1;
+    --bg-hero:#141414;
+    --ink:#1C1C1C;
+    --ink-soft:#6B6560;
+    --accent:#D81E3A;
+    --accent-deep:#A3122A;
+    --rust:#6E0F1A;
+    --surface:#FFFFFF;
+    --line:#E6DFDA;
+    --line-dark:#3A2426;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg-page);
+    color:var(--ink);
+    font-family:'Sarabun',sans-serif;
+    line-height:1.6;
+  }
+  h1,h2,h3,.display{
+    font-family:'Prompt',sans-serif;
+    margin:0;
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:0 20px 60px;}
+
+  /* HERO */
+  .hero{
+    background:var(--bg-hero);
+    color:var(--bg-page);
+    padding:36px 20px 30px;
+    border-bottom:4px solid var(--accent);
+  }
+  .hero-inner{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:16px;}
+  .mark{width:46px;height:46px;flex-shrink:0;}
+  .shop-name{font-size:26px;font-weight:700;color:#F5F1E6;}
+  .branch-name{font-size:14px;font-weight:600;color:#D6ABAB;margin-top:2px;font-family:'Prompt',sans-serif;}
+  .tagline{font-size:14px;color:#B5A6A6;margin-top:4px;}
+
+  /* SECTION */
+  .section{margin-top:28px;}
+  .section-title{font-size:16px;font-weight:600;color:var(--ink);margin-bottom:12px;display:flex;align-items:baseline;gap:8px;}
+  .section-title .rule{flex:1;height:1px;background:var(--line);}
+
+  /* DATE STRIP */
+  .date-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch;}
+  .date-strip::-webkit-scrollbar{height:6px;}
+  .date-strip::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px;}
+  .date-pill{
+    flex:0 0 auto;
+    border:1px solid var(--line);
+    background:var(--surface);
+    border-radius:10px;
+    padding:10px 14px;
+    text-align:center;
+    cursor:pointer;
+    min-width:64px;
+    transition:border-color .15s,background .15s;
+  }
+  .date-pill .dow{font-size:12px;color:var(--ink-soft);}
+  .date-pill .dom{font-size:18px;font-weight:600;font-family:'Prompt',sans-serif;margin-top:2px;}
+  .date-pill.active{background:var(--bg-hero);border-color:var(--bg-hero);}
+  .date-pill.active .dow,.date-pill.active .dom{color:#F5F1E6;}
+  .date-pill.today .dom{color:var(--accent-deep);}
+  .date-pill.active.today .dom{color:var(--accent);}
+
+  /* SLOTS */
+  .slot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:10px;}
+  .slot{
+    border:1px solid var(--line);
+    background:var(--surface);
+    border-radius:8px;
+    padding:12px 6px;
+    text-align:center;
+    font-weight:600;
+    font-family:'Prompt',sans-serif;
+    cursor:pointer;
+    transition:border-color .15s,transform .1s;
+  }
+  .slot:hover{border-color:var(--accent);}
+  .slot:active{transform:scale(.97);}
+  .slot.taken{
+    background:#EFEAE0;
+    color:#A79E8B;
+    border-color:#EFEAE0;
+    cursor:not-allowed;
+    text-decoration:line-through;
+  }
+  .slot.taken:hover{border-color:#EFEAE0;}
+  .empty-note{color:var(--ink-soft);font-size:14px;padding:16px 0;}
+  .live-banner{
+    background:#FBEAEA;border:1px solid var(--accent);border-left-width:4px;
+    border-radius:8px;padding:12px 14px;margin-bottom:14px;
+    font-size:14px;color:var(--accent-deep);font-weight:600;
+  }
+  .slot.busy{
+    background:#EFDCDC;color:#A87A7A;border-color:#EFDCDC;
+    cursor:not-allowed;text-decoration:line-through;
+  }
+  .slot.busy:hover{border-color:#EFDCDC;}
+  .status-line{font-size:14px;margin-top:10px;color:var(--ink-soft);}
+  .status-line strong{color:var(--ink);}
+
+  /* CARD / FORM BITS */
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;}
+  label{display:block;font-size:13px;color:var(--ink-soft);margin-bottom:6px;}
+  input[type=text],input[type=tel]{
+    width:100%;
+    padding:11px 12px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    font-family:'Sarabun',sans-serif;
+    font-size:15px;
+    background:#FCFAF5;
+  }
+  input:focus,button:focus,.slot:focus,.date-pill:focus{outline:2px solid var(--accent);outline-offset:2px;}
+  .field{margin-bottom:14px;}
+  .btn{
+    font-family:'Prompt',sans-serif;
+    font-weight:600;
+    font-size:15px;
+    border:none;
+    border-radius:8px;
+    padding:12px 18px;
+    cursor:pointer;
+    transition:opacity .15s;
+  }
+  .btn:hover{opacity:.9;}
+  .btn-primary{background:var(--accent-deep);color:#fff;}
+  .btn-secondary{background:transparent;color:var(--ink-soft);border:1px solid var(--line);}
+  .btn-danger{background:var(--rust);color:#fff;}
+  .btn-row{display:flex;gap:10px;margin-top:16px;}
+  .btn-block{width:100%;}
+
+  /* OVERLAY / MODAL */
+  .overlay{
+    position:fixed;inset:0;background:rgba(31,43,36,.55);
+    display:flex;align-items:flex-end;justify-content:center;
+    z-index:50;
+  }
+  @media(min-width:640px){.overlay{align-items:center;}}
+  .modal{
+    background:var(--bg-page);
+    width:100%;max-width:420px;
+    border-radius:16px 16px 0 0;
+    padding:22px 20px 26px;
+    max-height:88vh;overflow-y:auto;
+  }
+  @media(min-width:640px){.modal{border-radius:16px;}}
+  .modal-title{font-size:18px;font-weight:600;margin-bottom:4px;}
+  .modal-sub{font-size:13px;color:var(--ink-soft);margin-bottom:18px;}
+  .close-x{float:left;background:none;border:none;font-size:20px;color:var(--ink-soft);cursor:pointer;padding:4px;}
+
+  .confirm-code{
+    font-family:'Prompt',sans-serif;
+    font-size:22px;font-weight:700;
+    letter-spacing:2px;
+    background:var(--bg-hero);color:var(--accent);
+    padding:12px 16px;border-radius:8px;
+    text-align:center;margin:14px 0;
+  }
+
+  .booking-row{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:12px 0;border-bottom:1px solid var(--line);gap:10px;
+  }
+  .booking-row:last-child{border-bottom:none;}
+  .booking-time{font-family:'Prompt',sans-serif;font-weight:600;min-width:52px;}
+  .booking-name{flex:1;font-size:14px;}
+  .booking-name .phone{color:var(--ink-soft);font-size:12px;display:block;}
+
+  .footer-link{
+    text-align:center;margin-top:36px;
+  }
+  .footer-link button{
+    background:none;border:none;color:var(--ink-soft);
+    font-size:12px;text-decoration:underline;cursor:pointer;
+    font-family:'Sarabun',sans-serif;
+  }
+  .toast{
+    position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+    background:var(--bg-hero);color:#F5F1E6;
+    padding:12px 20px;border-radius:8px;font-size:14px;
+    z-index:100;box-shadow:0 4px 14px rgba(0,0,0,.2);
+  }
+  .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .tab-row{display:flex;gap:8px;margin-bottom:16px;}
+  .tab-btn{
+    flex:1;padding:9px;border-radius:8px;border:1px solid var(--line);
+    background:var(--surface);font-family:'Prompt',sans-serif;font-weight:600;
+    font-size:13px;cursor:pointer;color:var(--ink-soft);
+  }
+  .tab-btn.active{background:var(--bg-hero);color:#F5F1E6;border-color:var(--bg-hero);}
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-inner">
+    <svg class="mark" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="14" cy="14" r="6" stroke="#D81E3A" stroke-width="2.5"/>
+      <circle cx="14" cy="34" r="6" stroke="#D81E3A" stroke-width="2.5"/>
+      <path d="M18.5 17.5L40 40M40 8L18.5 30.5" stroke="#D81E3A" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>
+    <div>
+      <div class="shop-name" id="shopNameDisplay">ร้านตัดผมทรงชาย</div>
+      <div class="branch-name" id="branchNameDisplay">สาขาโพธิ์แก้ว</div>
+      <div class="tagline">จองคิวออนไลน์ ไม่ต้องรอ ไม่ต้องแชทถาม</div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="section">
+    <div class="section-title">เลือกวันที่<div class="rule"></div></div>
+    <div class="date-strip" id="dateStrip"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><span id="slotsHeading">คิวว่าง</span><div class="rule"></div></div>
+    <div class="live-banner hidden" id="liveBanner"></div>
+    <div class="slot-grid" id="slotGrid"></div>
+    <div class="empty-note hidden" id="emptyNote">วันนี้ร้านปิดหรือคิวเต็มหมดแล้ว ลองเลือกวันอื่นดูนะครับ</div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">ค้นหาคิวของฉัน<div class="rule"></div></div>
+    <div class="card">
+      <div class="field">
+        <label for="searchPhone">เบอร์โทรที่ใช้จอง</label>
+        <input type="tel" id="searchPhone" placeholder="08x-xxx-xxxx">
+      </div>
+      <button class="btn btn-secondary btn-block" onclick="findMyBookings()">ค้นหาคิว</button>
+      <div id="myBookingsResult" style="margin-top:14px;"></div>
+    </div>
+  </div>
+
+  <div class="footer-link">
+    <button onclick="openQuickBusy()">ช่างไม่ว่างตอนนี้</button>
+    <span style="margin:0 10px;color:var(--line);">·</span>
+    <button onclick="openAdminGate()">สำหรับเจ้าของร้าน</button>
+  </div>
+
+</div>
+
+<!-- BOOKING MODAL -->
+<div class="overlay hidden" id="bookOverlay">
+  <div class="modal">
+    <button class="close-x" onclick="closeModal('bookOverlay')">✕</button>
+    <div style="clear:both;"></div>
+    <div class="modal-title">ยืนยันการจอง</div>
+    <div class="modal-sub" id="bookModalSub"></div>
+    <div class="field">
+      <label for="custName">ชื่อลูกค้า</label>
+      <input type="text" id="custName" placeholder="ชื่อ-นามสกุล หรือชื่อเล่น">
+    </div>
+    <div class="field">
+      <label for="custPhone">เบอร์โทรศัพท์</label>
+      <input type="tel" id="custPhone" placeholder="08x-xxx-xxxx">
+    </div>
+    <button class="btn btn-primary btn-block" onclick="submitBooking()">ยืนยันจองคิว</button>
+  </div>
+</div>
+
+<!-- CONFIRMATION MODAL -->
+<div class="overlay hidden" id="confirmOverlay">
+  <div class="modal">
+    <div class="modal-title">จองคิวสำเร็จ</div>
+    <div class="modal-sub" id="confirmSub"></div>
+    <div class="confirm-code" id="confirmCode"></div>
+    <div class="modal-sub">เก็บรหัสนี้ไว้ หากต้องการยกเลิกให้ค้นหาด้วยเบอร์โทรของคุณด้านล่างของหน้าเว็บ</div>
+    <button class="btn btn-primary btn-block" onclick="closeModal('confirmOverlay')" style="margin-top:14px;">ปิด</button>
+  </div>
+</div>
+
+<!-- QUICK BUSY (no login needed) -->
+<div class="overlay hidden" id="quickBusyOverlay">
+  <div class="modal">
+    <button class="close-x" onclick="closeModal('quickBusyOverlay')">✕</button>
+    <div style="clear:both;"></div>
+    <div class="modal-title">แจ้งไม่ว่างตอนนี้</div>
+    <div class="modal-sub">ลูกค้าจะเห็นทันทีว่าช่างไม่ว่าง และจองคิวก่อนเวลาที่เลือกไม่ได้</div>
+    <div class="btn-row" style="flex-wrap:wrap;">
+      <button class="btn btn-secondary" style="flex:1 1 40%;" onclick="quickBusyPreset(15)">+15 นาที</button>
+      <button class="btn btn-secondary" style="flex:1 1 40%;" onclick="quickBusyPreset(30)">+30 นาที</button>
+      <button class="btn btn-secondary" style="flex:1 1 40%;" onclick="quickBusyPreset(45)">+45 นาที</button>
+      <button class="btn btn-secondary" style="flex:1 1 40%;" onclick="quickBusyPreset(60)">+60 นาที</button>
+    </div>
+    <div class="field" style="margin-top:16px;">
+      <label for="quickBusyTime">หรือระบุเวลาที่จะว่างเอง</label>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="quickBusyTime" placeholder="เช่น 15:30" style="flex:1;">
+        <button class="btn btn-primary" onclick="quickBusyCustomSubmit()">ตกลง</button>
+      </div>
+    </div>
+    <button class="btn btn-secondary btn-block" style="margin-top:14px;" onclick="quickBusyClear()">ว่างแล้วตอนนี้ (ยกเลิกแจ้ง)</button>
+  </div>
+</div>
+
+<!-- ADMIN PIN GATE -->
+<div class="overlay hidden" id="pinOverlay">
+  <div class="modal">
+    <button class="close-x" onclick="closeModal('pinOverlay')">✕</button>
+    <div style="clear:both;"></div>
+    <div class="modal-title">สำหรับเจ้าของร้าน</div>
+    <div class="modal-sub">กรอกรหัส PIN เพื่อเข้าจัดการร้าน</div>
+    <div class="field">
+      <label for="pinInput">รหัส PIN</label>
+      <input type="text" id="pinInput" placeholder="รหัสตั้งต้น 1234">
+    </div>
+    <button class="btn btn-primary btn-block" onclick="verifyPin()">เข้าสู่ระบบ</button>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div class="overlay hidden" id="adminOverlay">
+  <div class="modal" style="max-width:480px;">
+    <button class="close-x" onclick="closeModal('adminOverlay')">✕</button>
+    <div style="clear:both;"></div>
+    <div class="modal-title">จัดการร้าน</div>
+    <div class="tab-row" style="margin-top:14px;">
+      <button class="tab-btn active" id="tabBookingsBtn" onclick="switchAdminTab('bookings')">คิวลูกค้า</button>
+      <button class="tab-btn" id="tabSettingsBtn" onclick="switchAdminTab('settings')">ตั้งค่าร้าน</button>
+    </div>
+
+    <div id="adminBookingsTab">
+      <div class="date-strip" id="adminDateStrip" style="margin-bottom:14px;"></div>
+
+      <div class="card" style="margin-bottom:14px;">
+        <div class="status-line" id="shopToggleLabel" style="margin-top:0;margin-bottom:10px;"></div>
+        <button class="btn btn-danger btn-block" id="shopToggleBtn" onclick="toggleShopClosedForAdminDate()">ปิดร้านวันนี้</button>
+      </div>
+
+      <div class="card" style="margin-bottom:14px;">
+        <label>สถานะร้านตอนนี้ (ใช้กับคิววันนี้เท่านั้น)</label>
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="busyUntilInput" placeholder="ว่างตอน เช่น 15:30" style="flex:1;padding:11px 12px;border:1px solid var(--line);border-radius:8px;font-family:'Sarabun',sans-serif;font-size:15px;background:#FCFAF5;">
+          <button class="btn btn-primary" onclick="updateLiveStatus()">อัปเดต</button>
+        </div>
+        <div class="status-line" id="liveStatusLine"></div>
+        <button class="btn btn-secondary btn-block" style="margin-top:10px;" onclick="clearLiveStatus()">เคลียร์สถานะ (ว่างแล้วตอนนี้)</button>
+      </div>
+
+      <div class="card" style="margin-bottom:14px;">
+        <label for="walkinTime">ลูกค้าหน้าร้านมาถึงแล้ว — ล็อกคิวช่วงเวลา</label>
+        <div style="display:flex;gap:8px;">
+          <select id="walkinTime" style="flex:1;padding:11px 12px;border:1px solid var(--line);border-radius:8px;font-family:'Sarabun',sans-serif;font-size:15px;background:#FCFAF5;"></select>
+          <button class="btn btn-primary" onclick="addWalkinBooking()">ล็อกคิว</button>
+        </div>
+      </div>
+
+      <div style="text-align:right;margin-bottom:6px;">
+        <button onclick="clearAllBookingsForAdminDate()" style="background:none;border:none;color:var(--rust);font-size:13px;text-decoration:underline;cursor:pointer;font-family:'Sarabun',sans-serif;">ล้างคิวทั้งหมดของวันนี้</button>
+      </div>
+      <div class="card" id="adminBookingsList"></div>
+    </div>
+
+    <div id="adminSettingsTab" class="hidden">
+      <div class="card">
+        <div class="field">
+          <label for="setShopName">ชื่อร้าน</label>
+          <input type="text" id="setShopName">
+        </div>
+        <div class="field">
+          <label for="setBranchName">ชื่อสาขา (แสดงเล็กใต้ชื่อร้าน)</label>
+          <input type="text" id="setBranchName">
+        </div>
+        <div class="settings-grid">
+          <div class="field">
+            <label for="setOpenHour">เปิดร้าน (ชม.)</label>
+            <input type="text" id="setOpenHour" placeholder="11">
+          </div>
+          <div class="field">
+            <label for="setCloseHour">ปิดร้าน (ชม. 24 = เที่ยงคืน)</label>
+            <input type="text" id="setCloseHour" placeholder="24">
+          </div>
+        </div>
+        <div class="field">
+          <label for="setSlotMinutes">เวลาต่อคิว (นาที)</label>
+          <input type="text" id="setSlotMinutes" placeholder="40">
+        </div>
+        <div class="field">
+          <label for="setPin">เปลี่ยนรหัส PIN</label>
+          <input type="text" id="setPin">
+        </div>
+        <button class="btn btn-primary btn-block" onclick="saveSettingsForm()">บันทึกการตั้งค่า</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const DEFAULT_SETTINGS = { shopName: "ร้านตัดผมทรงชาย", branchName: "สาขาโพธิ์แก้ว", openHour: 11, closeHour: 24, slotMinutes: 40, pin: "1234" };
+let settings = { ...DEFAULT_SETTINGS };
+let selectedDate = null;       // 'YYYY-MM-DD'
+let selectedSlotTime = null;   // 'HH:MM'
+let adminSelectedDate = null;
+let isAdmin = false;
+let liveStatus = { dateKey: null, busyUntil: null };
+let closedDates = [];
+
+function pad(n){ return n.toString().padStart(2,'0'); }
+function dateKey(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+function thaiDow(d){ return ['อา','จ','อ','พ','พฤ','ศ','ส'][d.getDay()]; }
+function todayKey(){ return dateKey(new Date()); }
+function showToast(msg){
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 2600);
+}
+function closeModal(id){ document.getElementById(id).classList.add('hidden'); }
+function openModal(id){ document.getElementById(id).classList.remove('hidden'); }
+
+// ---------- BACKEND CONFIG ----------
+// วางลิงก์ Google Apps Script Web App ของคุณตรงนี้ (ดูวิธีตั้งค่าในคำแนะนำที่แนบมา)
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby126dqqPNVll4xsqa4GHA0YZ-k1qaujo14d2RhU8U7hen5bgxxVCpLJoiLiZNdVtzD/exec";
+
+// ---------- STORAGE (generic key/value over Google Apps Script) ----------
+async function storageGet(key){
+  try{
+    const res = await fetch(`${APPS_SCRIPT_URL}?key=${encodeURIComponent(key)}`);
+    const data = await res.json();
+    return (data && data.value !== undefined && data.value !== null) ? data.value : null;
+  }catch(e){
+    console.error('storageGet failed', key, e);
+    return null;
+  }
+}
+async function storageSet(key, value){
+  try{
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // เลี่ยง CORS preflight ที่ Apps Script จัดการไม่ได้
+      body: JSON.stringify({ key, value })
+    });
+    return true;
+  }catch(e){
+    console.error('storageSet failed', key, e);
+    return false;
+  }
+}
+
+// ---------- SETTINGS / BOOKINGS ----------
+async function loadSettings(){
+  try{
+    const raw = await storageGet('settings');
+    settings = raw ? JSON.parse(raw) : { ...DEFAULT_SETTINGS };
+  }catch(e){
+    settings = { ...DEFAULT_SETTINGS };
+  }
+  document.getElementById('shopNameDisplay').textContent = settings.shopName;
+  document.getElementById('branchNameDisplay').textContent = settings.branchName || '';
+  document.getElementById('branchNameDisplay').classList.toggle('hidden', !settings.branchName);
+}
+async function saveSettings(newSettings){
+  settings = newSettings;
+  const ok = await storageSet('settings', JSON.stringify(settings));
+  if(!ok) showToast('บันทึกการตั้งค่าไม่สำเร็จ ลองใหม่อีกครั้ง');
+}
+async function getBookings(dKey){
+  try{
+    const raw = await storageGet('bookings:'+dKey);
+    return raw ? JSON.parse(raw) : [];
+  }catch(e){
+    return [];
+  }
+}
+async function saveBookings(dKey, list){
+  const ok = await storageSet('bookings:'+dKey, JSON.stringify(list));
+  if(!ok) showToast('เกิดข้อผิดพลาด บันทึกไม่สำเร็จ');
+  return ok;
+}
+
+// ---------- LIVE STATUS (walk-in busy indicator) ----------
+function nowStr(){
+  const n = new Date();
+  return `${pad(n.getHours())}:${pad(n.getMinutes())}`;
+}
+async function loadLiveStatus(){
+  try{
+    const raw = await storageGet('liveStatus');
+    liveStatus = raw ? JSON.parse(raw) : { dateKey: null, busyUntil: null };
+  }catch(e){
+    liveStatus = { dateKey: null, busyUntil: null };
+  }
+}
+async function saveLiveStatusData(busyUntil){
+  liveStatus = { dateKey: todayKey(), busyUntil };
+  const ok = await storageSet('liveStatus', JSON.stringify(liveStatus));
+  if(!ok) showToast('อัปเดตสถานะไม่สำเร็จ');
+}
+// true only if a busy time was set for TODAY and that time hasn't passed yet
+function isBusyActive(){
+  return liveStatus.dateKey === todayKey() && liveStatus.busyUntil && liveStatus.busyUntil > nowStr();
+}
+async function updateLiveStatus(){
+  const val = document.getElementById('busyUntilInput').value.trim();
+  if(!/^\d{1,2}:\d{2}$/.test(val)){
+    showToast('กรอกเวลาแบบ HH:MM เช่น 15:30');
+    return;
+  }
+  await saveLiveStatusData(val);
+  showToast(`อัปเดตแล้ว: จะว่างตอน ${val} น.`);
+  renderLiveStatusLine();
+  if(selectedDate===todayKey()) renderSlots();
+  if(adminSelectedDate===todayKey()) renderAdminBookings();
+}
+async function clearLiveStatus(){
+  await saveLiveStatusData(null);
+  document.getElementById('busyUntilInput').value = '';
+  showToast('เคลียร์สถานะแล้ว ว่างรับคิวตามปกติ');
+  renderLiveStatusLine();
+  if(selectedDate===todayKey()) renderSlots();
+  if(adminSelectedDate===todayKey()) renderAdminBookings();
+}
+function renderLiveStatusLine(){
+  const el = document.getElementById('liveStatusLine');
+  if(!el) return;
+  if(isBusyActive()){
+    el.innerHTML = `กำลังตัดคิวหน้าร้านอยู่ — <strong>จะว่างตอน ${liveStatus.busyUntil} น.</strong>`;
+  }else{
+    el.textContent = 'ตอนนี้ไม่มีสถานะติดคิวหน้าร้าน';
+  }
+}
+
+// ---------- SHOP OPEN / CLOSED (per date, holidays etc.) ----------
+async function loadClosedDates(){
+  try{
+    const raw = await storageGet('closedDates');
+    closedDates = raw ? JSON.parse(raw) : [];
+  }catch(e){
+    closedDates = [];
+  }
+}
+async function saveClosedDates(list){
+  closedDates = list;
+  const ok = await storageSet('closedDates', JSON.stringify(list));
+  if(!ok) showToast('บันทึกสถานะร้านไม่สำเร็จ');
+}
+function isDateClosed(key){
+  return closedDates.includes(key);
+}
+async function toggleShopClosedForAdminDate(){
+  const list = isDateClosed(adminSelectedDate)
+    ? closedDates.filter(k=>k!==adminSelectedDate)
+    : [...closedDates, adminSelectedDate];
+  await saveClosedDates(list);
+  renderShopOpenToggle();
+  if(adminSelectedDate===selectedDate) renderSlots();
+  showToast(isDateClosed(adminSelectedDate) ? 'ปิดร้านวันนี้แล้ว ลูกค้าจองไม่ได้' : 'เปิดร้านรับจองตามปกติแล้ว');
+}
+function renderShopOpenToggle(){
+  const btn = document.getElementById('shopToggleBtn');
+  const label = document.getElementById('shopToggleLabel');
+  if(!btn || !adminSelectedDate) return;
+  const d = new Date(adminSelectedDate + 'T00:00:00');
+  const dateLabel = `${d.getDate()}/${d.getMonth()+1}`;
+  if(isDateClosed(adminSelectedDate)){
+    label.innerHTML = `<strong>ร้านปิดวันที่ ${dateLabel}</strong> — ลูกค้าจองคิวไม่ได้`;
+    btn.textContent = 'เปิดร้านรับจองตามปกติ';
+    btn.className = 'btn btn-primary btn-block';
+  }else{
+    label.textContent = `ร้านเปิดปกติวันที่ ${dateLabel}`;
+    btn.textContent = 'ปิดร้านวันนี้ (วันหยุด)';
+    btn.className = 'btn btn-danger btn-block';
+  }
+}
+
+// ---------- QUICK BUSY (no admin login needed) ----------
+function openQuickBusy(){
+  document.getElementById('quickBusyTime').value = '';
+  openModal('quickBusyOverlay');
+}
+async function applyQuickBusy(val){
+  await saveLiveStatusData(val);
+  showToast(`แจ้งแล้ว: จะว่างตอน ${val} น.`);
+  closeModal('quickBusyOverlay');
+  if(selectedDate===todayKey()) renderSlots();
+  renderLiveStatusLine();
+  const busyInput = document.getElementById('busyUntilInput');
+  if(busyInput) busyInput.value = val;
+}
+function quickBusyPreset(minutes){
+  const target = new Date(Date.now() + minutes*60000);
+  applyQuickBusy(`${pad(target.getHours())}:${pad(target.getMinutes())}`);
+}
+function quickBusyCustomSubmit(){
+  const val = document.getElementById('quickBusyTime').value.trim();
+  if(!/^\d{1,2}:\d{2}$/.test(val)){
+    showToast('กรอกเวลาแบบ HH:MM เช่น 15:30');
+    return;
+  }
+  applyQuickBusy(val);
+}
+async function quickBusyClear(){
+  await saveLiveStatusData(null);
+  showToast('แจ้งว่างแล้ว ลูกค้าจองได้ตามปกติ');
+  closeModal('quickBusyOverlay');
+  if(selectedDate===todayKey()) renderSlots();
+  renderLiveStatusLine();
+  const busyInput = document.getElementById('busyUntilInput');
+  if(busyInput) busyInput.value = '';
+}
+
+// ---------- SLOTS ----------
+function generateSlotTimes(){
+  const slots = [];
+  const step = Number(settings.slotMinutes) || 40;
+  let mins = Number(settings.openHour) * 60;
+  const endMins = Number(settings.closeHour) * 60;
+  while(mins + step <= endMins){
+    slots.push(`${pad(Math.floor(mins/60))}:${pad(mins%60)}`);
+    mins += step;
+  }
+  return slots;
+}
+
+// ---------- DATE STRIP ----------
+function buildDateList(days=14){
+  const list = [];
+  const base = new Date();
+  base.setHours(0,0,0,0);
+  for(let i=0;i<days;i++){
+    const d = new Date(base);
+    d.setDate(base.getDate()+i);
+    list.push(d);
+  }
+  return list;
+}
+function renderDateStrip(){
+  const strip = document.getElementById('dateStrip');
+  strip.innerHTML = '';
+  const dates = buildDateList();
+  if(!selectedDate) selectedDate = dateKey(dates[0]);
+  dates.forEach(d=>{
+    const key = dateKey(d);
+    const pill = document.createElement('div');
+    pill.className = 'date-pill' + (key===selectedDate?' active':'') + (key===todayKey()?' today':'');
+    pill.tabIndex = 0;
+    pill.innerHTML = `<div class="dow">${thaiDow(d)}</div><div class="dom">${d.getDate()}</div>`;
+    pill.onclick = ()=>{ selectedDate = key; renderDateStrip(); renderSlots(); };
+    strip.appendChild(pill);
+  });
+}
+
+async function renderSlots(){
+  const grid = document.getElementById('slotGrid');
+  const emptyNote = document.getElementById('emptyNote');
+  const heading = document.getElementById('slotsHeading');
+  const banner = document.getElementById('liveBanner');
+  const d = new Date(selectedDate + 'T00:00:00');
+  heading.textContent = `คิวว่างวันที่ ${d.getDate()}/${d.getMonth()+1}`;
+  grid.innerHTML = '<div class="empty-note">กำลังโหลด...</div>';
+  await loadClosedDates();
+  if(isDateClosed(selectedDate)){
+    banner.classList.add('hidden');
+    grid.innerHTML = '';
+    emptyNote.textContent = 'ร้านปิดวันนี้ ไม่รับจองคิว ลองเลือกวันอื่นดูนะครับ';
+    emptyNote.classList.remove('hidden');
+    return;
+  }
+  emptyNote.textContent = 'วันนี้ร้านปิดหรือคิวเต็มหมดแล้ว ลองเลือกวันอื่นดูนะครับ';
+  await loadLiveStatus();
+  const busyToday = selectedDate === todayKey() && isBusyActive();
+  if(busyToday){
+    banner.textContent = `ช่างกำลังตัดคิวอยู่ คาดว่าจะว่างเวลา ${liveStatus.busyUntil} น. — คิวก่อนเวลานี้จองไม่ได้`;
+    banner.classList.remove('hidden');
+  }else{
+    banner.classList.add('hidden');
+  }
+  const allSlots = generateSlotTimes();
+  const booked = await getBookings(selectedDate);
+  const bookedTimes = new Set(booked.map(b=>b.time));
+  grid.innerHTML = '';
+  if(allSlots.length===0){
+    emptyNote.classList.remove('hidden');
+    return;
+  }
+  emptyNote.classList.add('hidden');
+  allSlots.forEach(t=>{
+    const el = document.createElement('div');
+    const taken = bookedTimes.has(t);
+    const busy = !taken && busyToday && t < liveStatus.busyUntil;
+    el.className = 'slot' + (taken?' taken':'') + (busy?' busy':'');
+    el.textContent = t;
+    el.tabIndex = 0;
+    if(!taken && !busy){
+      el.onclick = ()=> openBookingModal(t);
+    }
+    grid.appendChild(el);
+  });
+}
+
+function openBookingModal(time){
+  selectedSlotTime = time;
+  const d = new Date(selectedDate + 'T00:00:00');
+  document.getElementById('bookModalSub').textContent =
+    `วันที่ ${d.getDate()}/${d.getMonth()+1} เวลา ${time} น.`;
+  document.getElementById('custName').value = '';
+  document.getElementById('custPhone').value = '';
+  openModal('bookOverlay');
+}
+
+async function submitBooking(){
+  const name = document.getElementById('custName').value.trim();
+  const phone = document.getElementById('custPhone').value.trim();
+  if(!name || !phone){
+    showToast('กรุณากรอกชื่อและเบอร์โทรให้ครบ');
+    return;
+  }
+  const current = await getBookings(selectedDate);
+  if(current.some(b=>b.time===selectedSlotTime)){
+    showToast('ขออภัย คิวนี้เพิ่งถูกจองไปแล้ว กรุณาเลือกคิวอื่น');
+    closeModal('bookOverlay');
+    renderSlots();
+    return;
+  }
+  const code = Math.random().toString(36).slice(2,7).toUpperCase();
+  current.push({ time: selectedSlotTime, name, phone, code });
+  const ok = await saveBookings(selectedDate, current);
+  closeModal('bookOverlay');
+  if(ok){
+    const d = new Date(selectedDate + 'T00:00:00');
+    document.getElementById('confirmSub').textContent =
+      `${name} วันที่ ${d.getDate()}/${d.getMonth()+1} เวลา ${selectedSlotTime} น.`;
+    document.getElementById('confirmCode').textContent = code;
+    openModal('confirmOverlay');
+    renderSlots();
+  }
+}
+
+// ---------- FIND MY BOOKINGS ----------
+async function findMyBookings(){
+  const phone = document.getElementById('searchPhone').value.trim();
+  const resultEl = document.getElementById('myBookingsResult');
+  if(!phone){
+    showToast('กรุณากรอกเบอร์โทร');
+    return;
+  }
+  resultEl.innerHTML = '<div class="empty-note">กำลังค้นหา...</div>';
+  const dates = buildDateList(14);
+  let found = [];
+  for(const d of dates){
+    const key = dateKey(d);
+    const list = await getBookings(key);
+    list.filter(b=>b.phone===phone).forEach(b=>found.push({...b, dateKey:key, dateObj:d}));
+  }
+  if(found.length===0){
+    resultEl.innerHTML = '<div class="empty-note">ไม่พบคิวที่จองด้วยเบอร์นี้</div>';
+    return;
+  }
+  resultEl.innerHTML = '';
+  found.forEach(b=>{
+    const row = document.createElement('div');
+    row.className = 'booking-row';
+    row.innerHTML = `
+      <div class="booking-time">${b.time}</div>
+      <div class="booking-name">${b.name}<span class="phone">${b.dateObj.getDate()}/${b.dateObj.getMonth()+1} · รหัส ${b.code}</span></div>
+      <button class="btn btn-secondary" style="padding:8px 12px;font-size:13px;">ยกเลิก</button>
+    `;
+    row.querySelector('button').onclick = async ()=>{
+      const list = await getBookings(b.dateKey);
+      const updated = list.filter(x=>x.code!==b.code);
+      await saveBookings(b.dateKey, updated);
+      showToast('ยกเลิกคิวเรียบร้อยแล้ว');
+      findMyBookings();
+      if(b.dateKey===selectedDate) renderSlots();
+    };
+    resultEl.appendChild(row);
+  });
+}
+
+// ---------- ADMIN ----------
+function openAdminGate(){
+  document.getElementById('pinInput').value = '';
+  openModal('pinOverlay');
+}
+function verifyPin(){
+  const val = document.getElementById('pinInput').value.trim();
+  if(val === (settings.pin || DEFAULT_SETTINGS.pin)){
+    closeModal('pinOverlay');
+    isAdmin = true;
+    adminSelectedDate = selectedDate;
+    openAdminPanel();
+  }else{
+    showToast('รหัส PIN ไม่ถูกต้อง');
+  }
+}
+function switchAdminTab(tab){
+  document.getElementById('tabBookingsBtn').classList.toggle('active', tab==='bookings');
+  document.getElementById('tabSettingsBtn').classList.toggle('active', tab==='settings');
+  document.getElementById('adminBookingsTab').classList.toggle('hidden', tab!=='bookings');
+  document.getElementById('adminSettingsTab').classList.toggle('hidden', tab!=='settings');
+  if(tab==='settings'){
+    document.getElementById('setShopName').value = settings.shopName;
+    document.getElementById('setBranchName').value = settings.branchName || '';
+    document.getElementById('setOpenHour').value = settings.openHour;
+    document.getElementById('setCloseHour').value = settings.closeHour;
+    document.getElementById('setSlotMinutes').value = settings.slotMinutes;
+    document.getElementById('setPin').value = settings.pin;
+  }
+}
+function openAdminPanel(){
+  renderAdminDateStrip();
+  renderAdminBookings();
+  switchAdminTab('bookings');
+  openModal('adminOverlay');
+}
+function renderAdminDateStrip(){
+  const strip = document.getElementById('adminDateStrip');
+  strip.innerHTML = '';
+  buildDateList().forEach(d=>{
+    const key = dateKey(d);
+    const pill = document.createElement('div');
+    pill.className = 'date-pill' + (key===adminSelectedDate?' active':'') + (key===todayKey()?' today':'');
+    pill.innerHTML = `<div class="dow">${thaiDow(d)}</div><div class="dom">${d.getDate()}</div>`;
+    pill.onclick = ()=>{ adminSelectedDate = key; renderAdminDateStrip(); renderAdminBookings(); };
+    strip.appendChild(pill);
+  });
+}
+async function renderWalkinSelect(){
+  const sel = document.getElementById('walkinTime');
+  const list = await getBookings(adminSelectedDate);
+  const bookedTimes = new Set(list.map(b=>b.time));
+  const busyToday = adminSelectedDate === todayKey() && isBusyActive();
+  const available = generateSlotTimes().filter(t=>{
+    if(bookedTimes.has(t)) return false;
+    if(busyToday && t < liveStatus.busyUntil) return false;
+    return true;
+  });
+  sel.innerHTML = '';
+  if(available.length===0){
+    sel.innerHTML = '<option value="">ไม่มีคิวว่างวันนี้</option>';
+    return;
+  }
+  available.forEach(t=>{
+    const opt = document.createElement('option');
+    opt.value = t;
+    opt.textContent = t + ' น.';
+    sel.appendChild(opt);
+  });
+}
+async function addWalkinBooking(){
+  const time = document.getElementById('walkinTime').value;
+  if(!time){
+    showToast('ไม่มีคิวว่างให้ล็อกในวันนี้');
+    return;
+  }
+  const current = await getBookings(adminSelectedDate);
+  if(current.some(b=>b.time===time)){
+    showToast('ช่วงเวลานี้เพิ่งถูกจองไปแล้ว');
+    renderAdminBookings();
+    renderWalkinSelect();
+    return;
+  }
+  const code = Math.random().toString(36).slice(2,7).toUpperCase();
+  current.push({ time, name: 'ลูกค้าหน้าร้าน', phone: '-', code });
+  await saveBookings(adminSelectedDate, current);
+  showToast(`ล็อกคิว ${time} น. ให้ลูกค้าหน้าร้านแล้ว`);
+  renderAdminBookings();
+  renderWalkinSelect();
+  if(adminSelectedDate===selectedDate) renderSlots();
+}
+async function clearAllBookingsForAdminDate(){
+  if(!confirm('ล้างคิวทั้งหมดของวันที่นี้ใช่หรือไม่? ข้อมูลที่ลบจะกู้คืนไม่ได้')) return;
+  await saveBookings(adminSelectedDate, []);
+  showToast('ล้างคิวทั้งหมดของวันนี้แล้ว');
+  renderAdminBookings();
+  if(adminSelectedDate===selectedDate) renderSlots();
+}
+async function renderAdminBookings(){
+  const listEl = document.getElementById('adminBookingsList');
+  listEl.innerHTML = 'กำลังโหลด...';
+  await loadLiveStatus();
+  await loadClosedDates();
+  renderShopOpenToggle();
+  renderLiveStatusLine();
+  if(liveStatus.dateKey===todayKey() && liveStatus.busyUntil){
+    document.getElementById('busyUntilInput').value = liveStatus.busyUntil;
+  }
+  renderWalkinSelect();
+  const list = await getBookings(adminSelectedDate);
+  list.sort((a,b)=> a.time.localeCompare(b.time));
+  if(list.length===0){
+    listEl.innerHTML = '<div class="empty-note">ยังไม่มีคิวจองในวันนี้</div>';
+    return;
+  }
+  listEl.innerHTML = '';
+  list.forEach(b=>{
+    const row = document.createElement('div');
+    row.className = 'booking-row';
+    row.innerHTML = `
+      <div class="booking-time">${b.time}</div>
+      <div class="booking-name">${b.name}<span class="phone">${b.phone}</span></div>
+      <button class="btn btn-danger" style="padding:8px 12px;font-size:13px;">ยกเลิก</button>
+    `;
+    row.querySelector('button').onclick = async ()=>{
+      const current = await getBookings(adminSelectedDate);
+      const updated = current.filter(x=>x.code!==b.code);
+      await saveBookings(adminSelectedDate, updated);
+      renderAdminBookings();
+      renderWalkinSelect();
+      if(adminSelectedDate===selectedDate) renderSlots();
+      showToast('ยกเลิกคิวแล้ว');
+    };
+    listEl.appendChild(row);
+  });
+}
+async function saveSettingsForm(){
+  const newSettings = {
+    shopName: document.getElementById('setShopName').value.trim() || DEFAULT_SETTINGS.shopName,
+    branchName: document.getElementById('setBranchName').value.trim(),
+    openHour: Number(document.getElementById('setOpenHour').value) || DEFAULT_SETTINGS.openHour,
+    closeHour: Number(document.getElementById('setCloseHour').value) || DEFAULT_SETTINGS.closeHour,
+    slotMinutes: Number(document.getElementById('setSlotMinutes').value) || DEFAULT_SETTINGS.slotMinutes,
+    pin: document.getElementById('setPin').value.trim() || DEFAULT_SETTINGS.pin,
+  };
+  await saveSettings(newSettings);
+  document.getElementById('shopNameDisplay').textContent = settings.shopName;
+  document.getElementById('branchNameDisplay').textContent = settings.branchName || '';
+  document.getElementById('branchNameDisplay').classList.toggle('hidden', !settings.branchName);
+  showToast('บันทึกการตั้งค่าเรียบร้อย');
+  renderSlots();
+}
+
+// ---------- INIT ----------
+(async function init(){
+  await loadSettings();
+  await loadLiveStatus();
+  renderDateStrip();
+  await renderSlots();
+})();
+</script>
+</body>
+</html>
