@@ -14,7 +14,6 @@
     --ink-soft:#6B6560;
     --accent:#D81E3A;
     --accent-deep:#A3122A;
-    --rust:#6E0F1A;
     --surface:#FFFFFF;
     --line:#E6DFDA;
   }
@@ -28,10 +27,10 @@
   .tagline{font-size:13px;color:#B5A6A6;margin-top:4px;}
 
   .section{margin-top:20px;}
-  .section-title{font-size:15px;font-weight:600;margin-bottom:10px;}
-  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px;}
+  .section-title{font-size:16px;font-weight:600;margin-bottom:10px;font-family:'Prompt',sans-serif;}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px;}
   label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:4px;}
-  input[type=text],input[type=number],input[type=time],input[type=date],select{
+  input[type=text],input[type=number],input[type=date],select{
     width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:8px;
     font-family:'Sarabun',sans-serif;font-size:15px;background:#FCFAF5;
   }
@@ -41,24 +40,28 @@
   .checks label{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink);}
   .checks input{width:auto;}
   .net-line{font-family:'Prompt',sans-serif;font-size:13px;font-weight:600;color:var(--accent-deep);margin-bottom:10px;}
-
-  .row-card{position:relative;}
-  .row-num{font-family:'Prompt',sans-serif;font-weight:700;font-size:14px;color:var(--accent-deep);margin-bottom:8px;}
-  .remove-btn{
-    position:absolute;top:12px;right:12px;background:none;border:none;
-    color:var(--ink-soft);font-size:13px;text-decoration:underline;cursor:pointer;
-  }
+  .quick-prices{display:flex;gap:6px;margin-top:6px;}
+  .quick-btn{flex:1;padding:7px;border-radius:6px;border:1px solid var(--line);background:#FCFAF5;
+    font-family:'Prompt',sans-serif;font-size:12px;font-weight:600;color:var(--ink-soft);cursor:pointer;}
+  .quick-btn:hover{border-color:var(--accent);color:var(--accent-deep);}
 
   .btn{font-family:'Prompt',sans-serif;font-weight:600;font-size:15px;border:none;border-radius:8px;
     padding:12px 18px;cursor:pointer;transition:opacity .15s;}
   .btn:hover{opacity:.9;}
   .btn-primary{background:var(--accent-deep);color:#fff;}
-  .btn-secondary{background:transparent;color:var(--ink-soft);border:1px dashed var(--line);}
+  .btn-dark{background:var(--bg-hero);color:#F5F1E6;}
   .btn-block{width:100%;}
 
-  .summary-card{background:var(--bg-hero);color:#F5F1E6;border-radius:12px;padding:16px;margin-top:16px;}
+  .summary-card{background:var(--bg-hero);color:#F5F1E6;border-radius:12px;padding:16px;margin-top:6px;margin-bottom:14px;}
   .summary-row{display:flex;justify-content:space-between;font-size:14px;padding:4px 0;}
   .summary-row.total{font-family:'Prompt',sans-serif;font-weight:700;font-size:19px;color:#FFD400;border-top:1px solid #3A2426;margin-top:6px;padding-top:10px;}
+
+  .list-item{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line);gap:10px;}
+  .list-item:last-child{border-bottom:none;}
+  .li-title{font-size:14px;font-weight:600;}
+  .li-sub{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+  .li-amount{font-family:'Prompt',sans-serif;font-weight:700;white-space:nowrap;}
+  .empty-note{color:var(--ink-soft);font-size:14px;}
 
   .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--bg-hero);color:#F5F1E6;
     padding:12px 20px;border-radius:8px;font-size:14px;z-index:100;box-shadow:0 4px 14px rgba(0,0,0,.2);}
@@ -70,7 +73,7 @@
 <div class="hero">
   <div class="hero-inner">
     <div class="shop-name">บันทึกยอดประจำวัน</div>
-    <div class="tagline">กรอกเองแทนการถ่ายรูป — สำหรับช่าง/พนักงาน</div>
+    <div class="tagline">กรอกทีละคน บันทึกทันที ปิดยอดตอนจบวัน</div>
   </div>
 </div>
 
@@ -83,16 +86,10 @@
         <input type="date" id="recordDate">
       </div>
       <div class="field">
-        <label for="recordBarber">ช่างเริ่มต้น (เติมอัตโนมัติทุกแถวใหม่)</label>
+        <label for="recordBarber">ช่างเริ่มต้น</label>
         <input type="text" id="recordBarber" placeholder="เช่น สมชาย">
       </div>
     </div>
-  </div>
-
-  <div class="section">
-    <div class="section-title">รายการลูกค้า</div>
-    <div id="rowsContainer"></div>
-    <button class="btn btn-secondary btn-block" onclick="addRow()">+ เพิ่มรายการลูกค้า</button>
   </div>
 
   <div class="summary-card">
@@ -103,7 +100,71 @@
   </div>
 
   <div class="section">
-    <button class="btn btn-primary btn-block" onclick="submitRecords()">บันทึกยอดวันนี้</button>
+    <div class="section-title">เพิ่มลูกค้าคนต่อไป</div>
+    <div class="card">
+      <div class="row-2">
+        <div class="field">
+          <label>ราคา (บาท)</label>
+          <input type="number" id="fPrice" inputmode="numeric" placeholder="เช่น 150">
+          <div class="quick-prices">
+            <button type="button" class="quick-btn" data-val="150">150</button>
+            <button type="button" class="quick-btn" data-val="120">120 (รีวิว)</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>วิธีจ่าย</label>
+          <select id="fPayment">
+            <option value="โอน">โอน</option>
+            <option value="เงินสด">เงินสด</option>
+          </select>
+        </div>
+      </div>
+      <div class="checks">
+        <label><input type="checkbox" id="fReview"> ส่วนลดรีวิว</label>
+        <label><input type="checkbox" id="fFree"> 5 ฟรี 1 (แลกฟรี)</label>
+      </div>
+      <div class="net-line">ราคาสุทธิ: <span id="fNetAmount">0 บาท</span></div>
+      <div class="row-2">
+        <div class="field">
+          <label>ช่าง</label>
+          <input type="text" id="fBarber" placeholder="เช่น สมชาย">
+        </div>
+        <div class="field">
+          <label>ทรงผม</label>
+          <input type="text" id="fHairstyle" placeholder="เช่น อันเดอร์คัต">
+        </div>
+      </div>
+      <div class="row-2">
+        <div class="field">
+          <label>เวลาเริ่ม</label>
+          <input type="text" id="fStart" placeholder="เช่น 14:30">
+        </div>
+        <div class="field">
+          <label>เวลาสิ้นสุด</label>
+          <input type="text" id="fEnd" placeholder="เช่น 15:10">
+        </div>
+      </div>
+      <div class="checks">
+        <label><input type="checkbox" id="fShave"> Shave (+50 บาท)</label>
+        <label><input type="checkbox" id="fShampoo"> Shampoo (+50 บาท)</label>
+      </div>
+      <div class="field">
+        <label>หมายเหตุ</label>
+        <input type="text" id="fNote" placeholder="เช่น ทิป, ย้อมสีผม, ชื่อย่อช่าง">
+      </div>
+      <button class="btn btn-primary btn-block" onclick="saveCustomer()">บันทึกลูกค้าคนนี้</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">รายการที่บันทึกวันนี้</div>
+    <div class="card" id="customerList">
+      <div class="empty-note">กำลังโหลด...</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <button class="btn btn-dark btn-block" onclick="finalizeDay()">ปิดยอดประจำวัน (ส่งสรุปเข้าไลน์)</button>
   </div>
 
 </div>
@@ -111,7 +172,7 @@
 <script>
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby126dqqPNVll4xsqa4GHA0YZ-k1qaujo14d2RhU8U7hen5bgxxVCpLJoiLiZNdVtzD/exec";
 
-let rowCount = 0;
+let todayList = [];
 
 function pad(n){ return n.toString().padStart(2,'0'); }
 function todayStr(){
@@ -126,152 +187,45 @@ function showToast(msg){
   setTimeout(()=>t.remove(), 2800);
 }
 
-function addRow(prefill){
-  rowCount++;
-  const id = 'row' + rowCount;
-  const div = document.createElement('div');
-  div.className = 'card row-card';
-  div.id = id;
-  div.innerHTML = `
-    <button class="remove-btn" onclick="removeRow('${id}')">ลบ</button>
-    <div class="row-num">ลำดับที่ ${rowCount}</div>
-    <div class="row-2">
-      <div class="field">
-        <label>ราคา</label>
-        <select class="f-price">
-          <option value="">-- เลือกราคา --</option>
-          <option value="150">150</option>
-          <option value="120">120 (ส่วนลดรีวิว)</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>วิธีจ่าย</label>
-        <select class="f-payment">
-          <option value="โอน">โอน</option>
-          <option value="เงินสด">เงินสด</option>
-        </select>
-      </div>
-    </div>
-    <div class="checks">
-      <label><input type="checkbox" class="f-review"> ส่วนลดรีวิว</label>
-      <label><input type="checkbox" class="f-free"> 5 ฟรี 1 (แลกฟรี)</label>
-    </div>
-    <div class="net-line">ราคาสุทธิ: <span class="net-amount">0 บาท</span></div>
-    <div class="row-2">
-      <div class="field">
-        <label>ช่าง</label>
-        <input type="text" class="f-barber" placeholder="เช่น สมชาย">
-      </div>
-      <div class="field">
-        <label>ทรงผม</label>
-        <input type="text" class="f-hairstyle" placeholder="เช่น อันเดอร์คัต, ทรงเกรียน">
-      </div>
-    </div>
-    <div class="row-2">
-      <div class="field">
-        <label>เวลาเริ่ม</label>
-        <input type="text" class="f-start" placeholder="เช่น 14:30">
-      </div>
-      <div class="field">
-        <label>เวลาสิ้นสุด</label>
-        <input type="text" class="f-end" placeholder="เช่น 15:10">
-      </div>
-    </div>
-    <div class="checks">
-      <label><input type="checkbox" class="f-shave"> Shave (+50 บาท)</label>
-      <label><input type="checkbox" class="f-shampoo"> Shampoo (+50 บาท)</label>
-    </div>
-    <div class="field">
-      <label>หมายเหตุ</label>
-      <input type="text" class="f-note" placeholder="เช่น ชื่อย่อช่าง">
-    </div>
-  `;
-  document.getElementById('rowsContainer').appendChild(div);
-
-  // เติมชื่อช่างเริ่มต้นให้อัตโนมัติจากช่อง "ช่างเริ่มต้น" ด้านบน (แก้ไขเป็นรายแถวได้เสมอ)
-  div.querySelector('.f-barber').value = document.getElementById('recordBarber').value.trim();
-
-  const priceSelect = div.querySelector('.f-price');
-  const paymentSelect = div.querySelector('.f-payment');
-  const reviewBox = div.querySelector('.f-review');
-  const freeBox = div.querySelector('.f-free');
-  const shaveBox = div.querySelector('.f-shave');
-  const shampooBox = div.querySelector('.f-shampoo');
-  const netEl = div.querySelector('.net-amount');
-
-  function refreshNet(){
-    netEl.textContent = computeNet_(div).toLocaleString() + ' บาท';
-    updateSummary();
+// ---------- โหลดรายการของวันที่เลือก (เผื่อปิดแท็บไปก่อนหน้านี้แล้วกลับมาทำต่อ) ----------
+async function loadDateData(){
+  const date = document.getElementById('recordDate').value;
+  if (!date) return;
+  document.getElementById('customerList').innerHTML = '<div class="empty-note">กำลังโหลด...</div>';
+  try{
+    const res = await fetch(APPS_SCRIPT_URL + '?action=getRecordsForDate&date=' + date);
+    const data = await res.json();
+    todayList = data.records || [];
+  }catch(e){
+    todayList = [];
   }
-
-  // เลือกราคา 120 (ส่วนลดรีวิว) แล้วติ๊กช่อง "ส่วนลดรีวิว" ให้อัตโนมัติ, เลือก 150 แล้วเอาติ๊กออกให้
-  priceSelect.addEventListener('change', function(){
-    if (priceSelect.value === '120') reviewBox.checked = true;
-    else if (priceSelect.value === '150') reviewBox.checked = false;
-    refreshNet();
-  });
-
-  // ติ๊ก "5 ฟรี 1" แล้วปิดช่องราคา/วิธีจ่าย/ส่วนลดรีวิวไป เพราะไม่เก็บเงิน แต่ยังนับเป็นลูกค้า 1 คน
-  freeBox.addEventListener('change', function(){
-    const isFree = freeBox.checked;
-    priceSelect.disabled = isFree;
-    paymentSelect.disabled = isFree;
-    reviewBox.disabled = isFree;
-    if (isFree){
-      priceSelect.value = '';
-      reviewBox.checked = false;
-    }
-    refreshNet();
-  });
-
-  reviewBox.addEventListener('change', refreshNet);
-  paymentSelect.addEventListener('change', refreshNet);
-  shaveBox.addEventListener('change', refreshNet);
-  shampooBox.addEventListener('change', refreshNet);
-
-  refreshNet();
-}
-
-// ราคาสุทธิของแถวนั้น = ราคาที่เลือก + Shave/Shampoo (50 ต่ออย่าง) — ถ้าติ๊ก "5 ฟรี 1" ให้เป็น 0 เสมอ
-function computeNet_(card){
-  if (card.querySelector('.f-free').checked) return 0;
-  const base = Number(card.querySelector('.f-price').value) || 0;
-  const shave = card.querySelector('.f-shave').checked ? 50 : 0;
-  const shampoo = card.querySelector('.f-shampoo').checked ? 50 : 0;
-  return base + shave + shampoo;
-}
-
-// แถวนี้นับเป็นลูกค้า 1 คนมั้ย — นับถ้าเลือกราคาแล้ว หรือติ๊ก "5 ฟรี 1" (ฟรีก็ยังนับเป็นลูกค้า)
-function isCustomerRow_(card){
-  if (card.querySelector('.f-free').checked) return true;
-  return (Number(card.querySelector('.f-price').value) || 0) > 0;
-}
-
-function removeRow(id){
-  const el = document.getElementById(id);
-  if (el) el.remove();
-  renumberRows();
+  renderList();
   updateSummary();
 }
 
-function renumberRows(){
-  const cards = document.querySelectorAll('.row-card');
-  cards.forEach(function(card, i){
-    card.querySelector('.row-num').textContent = 'ลำดับที่ ' + (i + 1);
-  });
+function renderList(){
+  const el = document.getElementById('customerList');
+  if (todayList.length === 0){
+    el.innerHTML = '<div class="empty-note">ยังไม่มีลูกค้าที่บันทึกวันนี้</div>';
+    return;
+  }
+  el.innerHTML = todayList.map(function(r, i){
+    const sub = [r.barber, r.startTime].filter(Boolean).join(' · ');
+    const freeTag = r.freeReward ? ' (5 ฟรี 1)' : '';
+    return '<div class="list-item"><div><div class="li-title">' + (i + 1) + '. ' + (r.hairstyle || 'ไม่ระบุทรง') + freeTag + '</div>' +
+      (sub ? '<div class="li-sub">' + sub + '</div>' : '') + '</div>' +
+      '<div class="li-amount">' + Number(r.price).toLocaleString() + ' บาท</div></div>';
+  }).join('');
 }
 
 function updateSummary(){
-  const cards = document.querySelectorAll('.row-card');
   let count = 0, total = 0, transfer = 0, cash = 0;
-  cards.forEach(function(card){
-    if (!isCustomerRow_(card)) return;
+  todayList.forEach(function(r){
     count++;
-    const net = computeNet_(card);
-    total += net;
-    const payment = card.querySelector('.f-payment').value;
-    if (payment === 'โอน') transfer += net;
-    else if (payment === 'เงินสด') cash += net;
+    const price = Number(r.price) || 0;
+    total += price;
+    if (r.paymentMethod === 'โอน') transfer += price;
+    else if (r.paymentMethod === 'เงินสด') cash += price;
   });
   document.getElementById('sumCount').textContent = count + ' หัว';
   document.getElementById('sumTransfer').textContent = transfer.toLocaleString() + ' บาท';
@@ -279,59 +233,130 @@ function updateSummary(){
   document.getElementById('sumTotal').textContent = total.toLocaleString() + ' บาท';
 }
 
-async function submitRecords(){
-  const date = document.getElementById('recordDate').value;
-  const barber = document.getElementById('recordBarber').value.trim();
-  if (!date){
-    showToast('กรุณาเลือกวันที่ก่อน');
-    return;
-  }
-  const cards = document.querySelectorAll('.row-card');
-  if (cards.length === 0){
-    showToast('กรุณาเพิ่มอย่างน้อย 1 รายการ');
-    return;
-  }
-  const rows = [];
-  cards.forEach(function(card, i){
-    if (!isCustomerRow_(card)) return; // ข้ามแถวที่ยังไม่ได้เลือกราคาและไม่ได้ติ๊ก 5 ฟรี 1
-    rows.push({
-      no: i + 1,
-      price: computeNet_(card),
-      paymentMethod: card.querySelector('.f-free').checked ? '' : card.querySelector('.f-payment').value,
-      reviewDiscount: card.querySelector('.f-review').checked,
-      freeReward: card.querySelector('.f-free').checked,
-      barber: card.querySelector('.f-barber').value.trim(),
-      hairstyle: card.querySelector('.f-hairstyle').value.trim(),
-      startTime: card.querySelector('.f-start').value || null,
-      endTime: card.querySelector('.f-end').value || null,
-      shave: card.querySelector('.f-shave').checked,
-      shampoo: card.querySelector('.f-shampoo').checked,
-      note: card.querySelector('.f-note').value.trim()
-    });
+// ---------- ฟอร์มเพิ่มลูกค้า ----------
+function computeNet(){
+  if (document.getElementById('fFree').checked) return 0;
+  const base = Number(document.getElementById('fPrice').value) || 0;
+  const shave = document.getElementById('fShave').checked ? 50 : 0;
+  const shampoo = document.getElementById('fShampoo').checked ? 50 : 0;
+  return base + shave + shampoo;
+}
+function refreshNet(){
+  document.getElementById('fNetAmount').textContent = computeNet().toLocaleString() + ' บาท';
+}
+
+document.getElementById('fPrice').addEventListener('input', function(){
+  if (this.value === '120') document.getElementById('fReview').checked = true;
+  else if (this.value === '150') document.getElementById('fReview').checked = false;
+  refreshNet();
+});
+document.querySelectorAll('.quick-btn').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    document.getElementById('fPrice').value = btn.dataset.val;
+    document.getElementById('fPrice').dispatchEvent(new Event('input'));
   });
-  if (rows.length === 0){
-    showToast('กรุณาเลือกราคา หรือติ๊ก "5 ฟรี 1" อย่างน้อย 1 รายการ');
-    return;
+});
+document.getElementById('fFree').addEventListener('change', function(){
+  const isFree = this.checked;
+  document.getElementById('fPrice').disabled = isFree;
+  document.getElementById('fPayment').disabled = isFree;
+  document.getElementById('fReview').disabled = isFree;
+  if (isFree){
+    document.getElementById('fPrice').value = '';
+    document.getElementById('fReview').checked = false;
   }
+  refreshNet();
+});
+['fReview','fShave','fShampoo','fPayment'].forEach(function(id){
+  document.getElementById(id).addEventListener('change', refreshNet);
+});
+
+function resetForm(){
+  document.getElementById('fPrice').value = '';
+  document.getElementById('fPrice').disabled = false;
+  document.getElementById('fPayment').value = 'โอน';
+  document.getElementById('fPayment').disabled = false;
+  document.getElementById('fReview').checked = false;
+  document.getElementById('fReview').disabled = false;
+  document.getElementById('fFree').checked = false;
+  document.getElementById('fHairstyle').value = '';
+  document.getElementById('fStart').value = '';
+  document.getElementById('fEnd').value = '';
+  document.getElementById('fShave').checked = false;
+  document.getElementById('fShampoo').checked = false;
+  document.getElementById('fNote').value = '';
+  refreshNet();
+}
+
+// ---------- บันทึกลูกค้า 1 คนทันที (ไม่ส่งเข้าไลน์) ----------
+async function saveCustomer(){
+  const date = document.getElementById('recordDate').value;
+  if (!date){ showToast('กรุณาเลือกวันที่'); return; }
+
+  const free = document.getElementById('fFree').checked;
+  const base = Number(document.getElementById('fPrice').value) || 0;
+  if (!free && base <= 0){ showToast('กรุณาเลือกราคา หรือติ๊ก "5 ฟรี 1"'); return; }
+
+  const row = {
+    no: todayList.length + 1,
+    price: computeNet(),
+    paymentMethod: free ? '' : document.getElementById('fPayment').value,
+    reviewDiscount: document.getElementById('fReview').checked,
+    freeReward: free,
+    barber: document.getElementById('fBarber').value.trim(),
+    hairstyle: document.getElementById('fHairstyle').value.trim(),
+    startTime: document.getElementById('fStart').value || null,
+    endTime: document.getElementById('fEnd').value || null,
+    shave: document.getElementById('fShave').checked,
+    shampoo: document.getElementById('fShampoo').checked,
+    note: document.getElementById('fNote').value.trim()
+  };
 
   try{
     await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'addRecords', date: date, barber: barber, rows: rows })
+      body: JSON.stringify({
+        action: 'addRecords',
+        date: date,
+        barber: document.getElementById('recordBarber').value.trim(),
+        rows: [row]
+      })
     });
-    showToast('บันทึกสำเร็จ! ส่งสรุปยอดเข้ากลุ่มไลน์แล้ว');
-    document.getElementById('rowsContainer').innerHTML = '';
-    rowCount = 0;
-    addRow();
+    todayList.push(row);
+    renderList();
+    updateSummary();
+    resetForm();
+    showToast('บันทึกแล้ว เพิ่มคนต่อไปได้เลย');
   }catch(e){
     showToast('บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง');
   }
 }
 
+// ---------- ปิดยอดประจำวัน: ส่งสรุปทั้งวันเข้าไลน์ครั้งเดียว ----------
+async function finalizeDay(){
+  const date = document.getElementById('recordDate').value;
+  if (!date){ showToast('กรุณาเลือกวันที่'); return; }
+  if (todayList.length === 0){ showToast('ยังไม่มีลูกค้าที่บันทึกไว้เลย'); return; }
+  if (!confirm('ยืนยันปิดยอดวันนี้และส่งสรุปเข้ากลุ่มไลน์?')) return;
+
+  try{
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'finalizeDay', date: date })
+    });
+    showToast('ส่งสรุปยอดประจำวันเข้ากลุ่มไลน์แล้ว');
+  }catch(e){
+    showToast('ส่งสรุปไม่สำเร็จ ลองใหม่อีกครั้ง');
+  }
+}
+
 // ---------- INIT ----------
 document.getElementById('recordDate').value = todayStr();
-addRow();
+document.getElementById('recordDate').addEventListener('change', loadDateData);
+refreshNet();
+loadDateData();
 </script>
 </body>
 </html>
