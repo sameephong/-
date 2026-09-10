@@ -72,6 +72,15 @@
   .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--bg-hero);color:#F5F1E6;
     padding:12px 20px;border-radius:8px;font-size:14px;z-index:100;box-shadow:0 4px 14px rgba(0,0,0,.2);}
   .hidden{display:none !important;}
+
+  .overlay{position:fixed;inset:0;background:rgba(20,20,20,.6);display:flex;align-items:center;justify-content:center;z-index:200;padding:16px;}
+  .modal-box{background:var(--surface);border-radius:14px;padding:20px;max-width:400px;width:100%;}
+  .modal-title{font-family:'Prompt',sans-serif;font-size:18px;font-weight:700;margin-bottom:8px;}
+  .modal-sub{font-size:13px;color:var(--ink-soft);margin-bottom:14px;}
+  .modal-preview{background:var(--bg-page);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:14px;}
+  .modal-preview .mp-row{display:flex;justify-content:space-between;padding:2px 0;}
+  .modal-btn-row{display:flex;flex-direction:column;gap:8px;}
+  .btn-cancel{background:transparent;border:1px solid var(--line);color:var(--ink-soft);}
 </style>
 </head>
 <body>
@@ -174,9 +183,22 @@
   </div>
 
   <div class="section">
-    <button class="btn btn-dark btn-block" onclick="finalizeDay()">ปิดยอดประจำวัน (ส่งสรุปเข้าไลน์)</button>
+    <button class="btn btn-dark btn-block" onclick="openFinalizeModal()">ปิดยอดประจำวัน (ส่งสรุปเข้าไลน์)</button>
   </div>
 
+</div>
+
+<!-- FINALIZE CONFIRM MODAL -->
+<div class="overlay hidden" id="finalizeModal">
+  <div class="modal-box">
+    <div class="modal-title">ยืนยันปิดยอดประจำวัน?</div>
+    <div class="modal-sub">ระบบจะส่งข้อความสรุปนี้เข้ากลุ่มไลน์ทันที <strong>ส่งแล้วเรียกคืนไม่ได้</strong> กรุณาเช็คให้ชัวร์ก่อนกดยืนยัน</div>
+    <div class="modal-preview" id="finalizePreview"></div>
+    <div class="modal-btn-row">
+      <button class="btn btn-cancel" onclick="closeFinalizeModal()">ยกเลิก (ข้อมูลลูกค้ายังอยู่ครบ)</button>
+      <button class="btn btn-primary" onclick="confirmFinalize()">ยืนยันปิดยอด ส่งเข้าไลน์</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -225,10 +247,16 @@ function renderList(){
     return;
   }
   el.innerHTML = todayList.map(function(r, i){
-    const sub = [r.barber, r.startTime].filter(Boolean).join(' · ');
+    const sub = [r.barber, r.startTime ? ('เริ่ม ' + r.startTime) : ''].filter(Boolean).join(' · ');
     const freeTag = r.freeReward ? ' (5 ฟรี 1)' : '';
+    const extras = [];
+    if (r.shave) extras.push('Shave');
+    if (r.shampoo) extras.push('Shampoo');
+    const extrasLine = extras.length ? '<div class="li-sub">' + extras.join(' + ') + '</div>' : '';
+    const noteLine = r.note ? '<div class="li-sub">📝 ' + r.note + '</div>' : '';
     return '<div class="list-item"><div><div class="li-title">' + (i + 1) + '. ' + (r.hairstyle || 'ไม่ระบุทรง') + freeTag + '</div>' +
       (sub ? '<div class="li-sub">' + sub + '</div>' : '') +
+      extrasLine + noteLine +
       '<div class="li-actions"><button onclick="startEdit(\'' + r.id + '\')">แก้ไข</button><button onclick="quickDelete(\'' + r.id + '\')">ลบ</button></div></div>' +
       '<div class="li-amount">' + Number(r.price).toLocaleString() + ' บาท</div></div>';
   }).join('');
@@ -424,13 +452,37 @@ async function saveCustomer(){
   }
 }
 
-// ---------- ปิดยอดประจำวัน: ส่งสรุปทั้งวันเข้าไลน์ครั้งเดียว ----------
-async function finalizeDay(){
+// ---------- ปิดยอดประจำวัน: ส่งสรุปทั้งวันเข้าไลน์ครั้งเดียว (มีหน้าต่างให้เช็คก่อนยืนยันเสมอ) ----------
+function openFinalizeModal(){
   const date = document.getElementById('recordDate').value;
   if (!date){ showToast('กรุณาเลือกวันที่'); return; }
   if (todayList.length === 0){ showToast('ยังไม่มีลูกค้าที่บันทึกไว้เลย'); return; }
-  if (!confirm('ยืนยันปิดยอดวันนี้และส่งสรุปเข้ากลุ่มไลน์?')) return;
 
+  let total = 0, transfer = 0, cash = 0;
+  todayList.forEach(function(r){
+    const price = Number(r.price) || 0;
+    total += price;
+    if (r.paymentMethod === 'โอน') transfer += price;
+    else if (r.paymentMethod === 'เงินสด') cash += price;
+  });
+
+  document.getElementById('finalizePreview').innerHTML =
+    '<div class="mp-row"><span>วันที่</span><span>' + date + '</span></div>' +
+    '<div class="mp-row"><span>จำนวนลูกค้า</span><span>' + todayList.length + ' หัว</span></div>' +
+    '<div class="mp-row"><span>โอน</span><span>' + transfer.toLocaleString() + ' บาท</span></div>' +
+    '<div class="mp-row"><span>เงินสด</span><span>' + cash.toLocaleString() + ' บาท</span></div>' +
+    '<div class="mp-row"><strong>ยอดรวม</strong><strong>' + total.toLocaleString() + ' บาท</strong></div>';
+
+  document.getElementById('finalizeModal').classList.remove('hidden');
+}
+
+function closeFinalizeModal(){
+  document.getElementById('finalizeModal').classList.add('hidden');
+}
+
+async function confirmFinalize(){
+  const date = document.getElementById('recordDate').value;
+  closeFinalizeModal();
   try{
     await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
