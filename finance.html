@@ -50,6 +50,7 @@
   .summary-row{display:flex;justify-content:space-between;font-size:14px;padding:5px 0;}
   .summary-row.income span:last-child{color:#5FD87A;font-weight:600;}
   .summary-row.expense span:last-child{color:#FF8A8A;font-weight:600;}
+  .summary-row.sub{font-size:12px;color:#B5A6A6;padding:2px 0;}
   .summary-row.net{font-family:'Prompt',sans-serif;font-weight:700;font-size:20px;
     border-top:1px solid #3A2426;margin-top:8px;padding-top:12px;}
   .summary-row.net span:last-child{color:#FFD400;}
@@ -119,6 +120,8 @@
 
   <div class="summary-card">
     <div class="summary-row income"><span>รายได้จากยอดตัดผม</span><span id="sumRevenue">0 บาท</span></div>
+    <div class="summary-row sub"><span>&nbsp;&nbsp;- เงินสด</span><span id="sumRevenueCash">0 บาท</span></div>
+    <div class="summary-row sub"><span>&nbsp;&nbsp;- เงินโอน</span><span id="sumRevenueTransfer">0 บาท</span></div>
     <div class="summary-row expense"><span>รายจ่ายรวม</span><span id="sumExpense">0 บาท</span></div>
     <div class="summary-row net"><span>รายได้สุทธิ</span><span id="sumNet">0 บาท</span></div>
   </div>
@@ -260,11 +263,16 @@ async function submitExpense(){
 
   showToast('กำลังบันทึก...');
   try{
-    await fetch(APPS_SCRIPT_URL, {
+    const res = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(payload)
     });
+    const result = await res.json();
+    if (!result.ok){
+      showToast('บันทึกไม่สำเร็จ (debug): ' + (result.error || 'ไม่ทราบสาเหตุ'));
+      return;
+    }
     showToast('บันทึกรายจ่ายสำเร็จ');
     document.getElementById('expAmount').value = '';
     document.getElementById('expFile').value = '';
@@ -272,7 +280,7 @@ async function submitExpense(){
     document.getElementById('expOtherNote').value = '';
     loadSummary();
   }catch(e){
-    showToast('บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง');
+    showToast('บันทึกไม่สำเร็จ (debug): ' + e.message);
   }
 }
 
@@ -303,12 +311,14 @@ async function loadSummary(){
     fetch(APPS_SCRIPT_URL + '?action=getExpenses&month=' + month).then(r => r.json())
   ]);
 
-  const revenue = revRes.revenue || 0;
+  const revenue = revRes.revenue || { total: 0, cash: 0, transfer: 0 };
   const expenses = expRes.expenses || [];
   const totalExpense = expenses.reduce(function(s, x){ return s + (Number(x.amount) || 0); }, 0);
-  const net = revenue - totalExpense;
+  const net = revenue.total - totalExpense;
 
-  document.getElementById('sumRevenue').textContent = revenue.toLocaleString() + ' บาท';
+  document.getElementById('sumRevenue').textContent = revenue.total.toLocaleString() + ' บาท';
+  document.getElementById('sumRevenueCash').textContent = revenue.cash.toLocaleString() + ' บาท';
+  document.getElementById('sumRevenueTransfer').textContent = revenue.transfer.toLocaleString() + ' บาท';
   document.getElementById('sumExpense').textContent = totalExpense.toLocaleString() + ' บาท';
   document.getElementById('sumNet').textContent = net.toLocaleString() + ' บาท';
 
