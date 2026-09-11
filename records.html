@@ -194,9 +194,13 @@
     <div class="modal-title">ยืนยันปิดยอดประจำวัน?</div>
     <div class="modal-sub">ระบบจะส่งข้อความสรุปนี้เข้ากลุ่มไลน์ทันที <strong>ส่งแล้วเรียกคืนไม่ได้</strong> กรุณาเช็คให้ชัวร์ก่อนกดยืนยัน</div>
     <div class="modal-preview" id="finalizePreview"></div>
+    <div class="field">
+      <label for="closedByName">ชื่อผู้ปิดยอด (บังคับกรอก)</label>
+      <input type="text" id="closedByName" placeholder="เช่น แซม">
+    </div>
     <div class="modal-btn-row">
       <button class="btn btn-cancel" onclick="closeFinalizeModal()">ยกเลิก (ข้อมูลลูกค้ายังอยู่ครบ)</button>
-      <button class="btn btn-primary" onclick="confirmFinalize()">ยืนยันปิดยอด ส่งเข้าไลน์</button>
+      <button class="btn btn-primary" onclick="confirmFinalize()">ยืนยันปิดยอดประจำวันและส่งเข้าไลน์</button>
     </div>
   </div>
 </div>
@@ -240,6 +244,22 @@ async function loadDateData(){
   updateSummary();
 }
 
+function formatTimeRange_(r){
+  if (!r.startTime) return '';
+  if (!r.endTime) return 'เริ่ม ' + r.startTime;
+  const mins = timeDiffMinutes_(r.startTime, r.endTime);
+  const durationText = mins !== null ? ' (ใช้เวลา ' + mins + ' นาที)' : '';
+  return r.startTime + '-' + r.endTime + durationText;
+}
+function timeDiffMinutes_(start, end){
+  const m1 = /^(\d{1,2}):(\d{2})$/.exec(start);
+  const m2 = /^(\d{1,2}):(\d{2})$/.exec(end);
+  if (!m1 || !m2) return null;
+  let diff = (Number(m2[1]) * 60 + Number(m2[2])) - (Number(m1[1]) * 60 + Number(m1[2]));
+  if (diff < 0) diff += 24 * 60; // เผื่อกรณีข้ามเที่ยงคืน
+  return diff;
+}
+
 function renderList(){
   const el = document.getElementById('customerList');
   if (todayList.length === 0){
@@ -247,8 +267,10 @@ function renderList(){
     return;
   }
   el.innerHTML = todayList.map(function(r, i){
-    const sub = [r.barber, r.startTime ? ('เริ่ม ' + r.startTime) : ''].filter(Boolean).join(' · ');
+    const timeRange = formatTimeRange_(r);
+    const sub = [r.barber, timeRange].filter(Boolean).join(' · ');
     const freeTag = r.freeReward ? ' (5 ฟรี 1)' : '';
+    const paymentLine = r.freeReward ? '' : (r.paymentMethod ? '<div class="li-sub">💰 ' + r.paymentMethod + '</div>' : '');
     const extras = [];
     if (r.shave) extras.push('Shave');
     if (r.shampoo) extras.push('Shampoo');
@@ -256,7 +278,7 @@ function renderList(){
     const noteLine = r.note ? '<div class="li-sub">📝 ' + r.note + '</div>' : '';
     return '<div class="list-item"><div><div class="li-title">' + (i + 1) + '. ' + (r.hairstyle || 'ไม่ระบุทรง') + freeTag + '</div>' +
       (sub ? '<div class="li-sub">' + sub + '</div>' : '') +
-      extrasLine + noteLine +
+      paymentLine + extrasLine + noteLine +
       '<div class="li-actions"><button onclick="startEdit(\'' + r.id + '\')">แก้ไข</button><button onclick="quickDelete(\'' + r.id + '\')">ลบ</button></div></div>' +
       '<div class="li-amount">' + Number(r.price).toLocaleString() + ' บาท</div></div>';
   }).join('');
@@ -482,14 +504,17 @@ function closeFinalizeModal(){
 
 async function confirmFinalize(){
   const date = document.getElementById('recordDate').value;
+  const closedBy = document.getElementById('closedByName').value.trim();
+  if (!closedBy){ showToast('กรุณากรอกชื่อผู้ปิดยอดก่อน'); return; }
   closeFinalizeModal();
   try{
     await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'finalizeDay', date: date })
+      body: JSON.stringify({ action: 'finalizeDay', date: date, closedBy: closedBy })
     });
     showToast('ส่งสรุปยอดประจำวันเข้ากลุ่มไลน์แล้ว');
+    document.getElementById('closedByName').value = '';
   }catch(e){
     showToast('ส่งสรุปไม่สำเร็จ ลองใหม่อีกครั้ง');
   }
