@@ -179,13 +179,24 @@
   .booking-name .phone{color:var(--ink-soft);font-size:12px;display:block;}
 
   .footer-link{
-    text-align:center;margin-top:36px;
+    text-align:center;margin-top:20px;
   }
   .footer-link button{
     background:none;border:none;color:var(--ink-soft);
     font-size:12px;text-decoration:underline;cursor:pointer;
     font-family:'Sarabun',sans-serif;
   }
+  .btn-barber{
+    background:var(--accent);color:#fff;font-family:'Prompt',sans-serif;font-weight:700;
+    font-size:17px;padding:18px;border:none;border-radius:12px;width:100%;cursor:pointer;
+    box-shadow:0 4px 12px rgba(216,30,58,.35);display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .btn-barber:hover{opacity:.92;}
+  .btn-success{
+    background:#1E8449;color:#fff;font-family:'Prompt',sans-serif;font-weight:700;
+    font-size:16px;padding:14px;border:none;border-radius:10px;width:100%;cursor:pointer;
+  }
+  .btn-success:hover{opacity:.9;}
   .toast{
     position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
     background:var(--bg-hero);color:#F5F1E6;
@@ -246,9 +257,11 @@
     </div>
   </div>
 
+  <div class="section">
+    <button class="btn-barber" onclick="openQuickBusy()">⏱️ ช่างแจ้งไม่ว่าง / คิวแน่นตอนนี้</button>
+  </div>
+
   <div class="footer-link">
-    <button onclick="openQuickBusy()">ช่างไม่ว่างตอนนี้</button>
-    <span style="margin:0 10px;color:var(--line);">·</span>
     <button onclick="openAdminGate()">สำหรับเจ้าของร้าน</button>
   </div>
 
@@ -298,10 +311,12 @@
       <button class="btn btn-secondary" style="flex:1 1 40%;" onclick="quickBusyPreset(60)">+60 นาที</button>
     </div>
     <div class="field" style="margin-top:16px;">
-      <label for="quickBusyPeople">หรือแจ้งจำนวนลูกค้าที่รอคิวอยู่หน้าร้าน</label>
-      <div style="display:flex;gap:8px;">
-        <input type="number" id="quickBusyPeople" inputmode="numeric" placeholder="เช่น 2" style="flex:1;">
-        <button class="btn btn-primary" onclick="quickBusyByPeopleCount()">คำนวณให้</button>
+      <label>หรือแจ้งจำนวนลูกค้าที่รอคิวอยู่หน้าร้าน (คำนวณเวลาให้อัตโนมัติ)</label>
+      <div class="btn-row" style="flex-wrap:wrap;">
+        <button class="btn btn-secondary" style="flex:1 1 40%;" onclick="quickBusyByPeopleCount(1)">ลูกค้า 1 คน</button>
+        <button class="btn btn-secondary" style="flex:1 1 40%;" onclick="quickBusyByPeopleCount(2)">ลูกค้า 2 คน</button>
+        <button class="btn btn-secondary" style="flex:1 1 40%;" onclick="quickBusyByPeopleCount(3)">ลูกค้า 3 คน</button>
+        <button class="btn btn-secondary" style="flex:1 1 40%;" onclick="quickBusyByPeopleCount(4)">ลูกค้า 4 คน</button>
       </div>
       <div class="modal-sub" style="margin-top:6px;" id="quickBusyPeopleHint"></div>
     </div>
@@ -312,7 +327,7 @@
         <button class="btn btn-primary" onclick="quickBusyCustomSubmit()">ตกลง</button>
       </div>
     </div>
-    <button class="btn btn-secondary btn-block" style="margin-top:14px;" onclick="quickBusyClear()">ว่างแล้วตอนนี้ (ยกเลิกแจ้ง)</button>
+    <button class="btn-success" style="margin-top:16px;" onclick="quickBusyClear()">✅ ว่างแล้วตอนนี้ (ยกเลิกแจ้ง)</button>
   </div>
 </div>
 
@@ -590,7 +605,6 @@ function renderShopOpenToggle(){
 // ---------- QUICK BUSY (no admin login needed) ----------
 function openQuickBusy(){
   document.getElementById('quickBusyTime').value = '';
-  document.getElementById('quickBusyPeople').value = '';
   document.getElementById('quickBusyPeopleHint').textContent =
     `(คำนวณจากเวลาตัดโดยประมาณ ${settings.slotMinutes || 40} นาทีต่อคน)`;
   openModal('quickBusyOverlay');
@@ -608,12 +622,7 @@ function quickBusyPreset(minutes){
   const target = new Date(Date.now() + minutes*60000);
   applyQuickBusy(`${pad(target.getHours())}:${pad(target.getMinutes())}`);
 }
-function quickBusyByPeopleCount(){
-  const people = Number(document.getElementById('quickBusyPeople').value);
-  if(!people || people <= 0){
-    showToast('กรอกจำนวนลูกค้าที่รอคิวก่อน');
-    return;
-  }
+function quickBusyByPeopleCount(people){
   const perPerson = Number(settings.slotMinutes) || 40;
   const minutesToAdd = people * perPerson;
   const target = new Date(Date.now() + minutesToAdd*60000);
