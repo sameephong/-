@@ -298,6 +298,14 @@
       <button class="btn btn-secondary" style="flex:1 1 40%;" onclick="quickBusyPreset(60)">+60 นาที</button>
     </div>
     <div class="field" style="margin-top:16px;">
+      <label for="quickBusyPeople">หรือแจ้งจำนวนลูกค้าที่รอคิวอยู่หน้าร้าน</label>
+      <div style="display:flex;gap:8px;">
+        <input type="number" id="quickBusyPeople" inputmode="numeric" placeholder="เช่น 2" style="flex:1;">
+        <button class="btn btn-primary" onclick="quickBusyByPeopleCount()">คำนวณให้</button>
+      </div>
+      <div class="modal-sub" style="margin-top:6px;" id="quickBusyPeopleHint"></div>
+    </div>
+    <div class="field" style="margin-top:16px;">
       <label for="quickBusyTime">หรือระบุเวลาที่จะว่างเอง</label>
       <div style="display:flex;gap:8px;">
         <input type="text" id="quickBusyTime" placeholder="เช่น 15:30" style="flex:1;">
@@ -582,6 +590,9 @@ function renderShopOpenToggle(){
 // ---------- QUICK BUSY (no admin login needed) ----------
 function openQuickBusy(){
   document.getElementById('quickBusyTime').value = '';
+  document.getElementById('quickBusyPeople').value = '';
+  document.getElementById('quickBusyPeopleHint').textContent =
+    `(คำนวณจากเวลาตัดโดยประมาณ ${settings.slotMinutes || 40} นาทีต่อคน)`;
   openModal('quickBusyOverlay');
 }
 async function applyQuickBusy(val){
@@ -596,6 +607,18 @@ async function applyQuickBusy(val){
 function quickBusyPreset(minutes){
   const target = new Date(Date.now() + minutes*60000);
   applyQuickBusy(`${pad(target.getHours())}:${pad(target.getMinutes())}`);
+}
+function quickBusyByPeopleCount(){
+  const people = Number(document.getElementById('quickBusyPeople').value);
+  if(!people || people <= 0){
+    showToast('กรอกจำนวนลูกค้าที่รอคิวก่อน');
+    return;
+  }
+  const perPerson = Number(settings.slotMinutes) || 40;
+  const minutesToAdd = people * perPerson;
+  const target = new Date(Date.now() + minutesToAdd*60000);
+  applyQuickBusy(`${pad(target.getHours())}:${pad(target.getMinutes())}`);
+  showToast(`แจ้งลูกค้า ${people} คน × ${perPerson} นาที = ว่างอีก ${minutesToAdd} นาที`);
 }
 function quickBusyCustomSubmit(){
   const val = document.getElementById('quickBusyTime').value.trim();
@@ -656,6 +679,26 @@ function renderDateStrip(){
   });
 }
 
+// โหลดข้อมูลที่หน้าจองคิวต้องใช้ทั้งหมดในคำขอเดียว (แทนที่จะยิงแยก 3-4 รอบ ซึ่งทำให้หน้าเว็บโหลดช้า)
+async function loadBookingPageData_(date){
+  try{
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=getBookingPageData&date=${encodeURIComponent(date)}`);
+    const data = await res.json();
+    settings = data.settings || { ...DEFAULT_SETTINGS };
+    closedDates = data.closedDates || [];
+    liveStatus = data.liveStatus || { dateKey: null, busyUntil: null };
+    document.getElementById('shopNameDisplay').textContent = settings.shopName;
+    document.getElementById('branchNameDisplay').textContent = settings.branchName || '';
+    document.getElementById('branchNameDisplay').classList.toggle('hidden', !settings.branchName);
+    return data.bookings || [];
+  }catch(e){
+    settings = { ...DEFAULT_SETTINGS };
+    closedDates = [];
+    liveStatus = { dateKey: null, busyUntil: null };
+    return [];
+  }
+}
+
 async function renderSlots(){
   const grid = document.getElementById('slotGrid');
   const emptyNote = document.getElementById('emptyNote');
@@ -664,7 +707,7 @@ async function renderSlots(){
   const d = new Date(selectedDate + 'T00:00:00');
   heading.textContent = `คิวว่างวันที่ ${d.getDate()}/${d.getMonth()+1}`;
   grid.innerHTML = '<div class="empty-note">กำลังโหลด...</div>';
-  await loadClosedDates();
+  const booked = await loadBookingPageData_(selectedDate);
   if(isDateClosed(selectedDate)){
     banner.classList.add('hidden');
     grid.innerHTML = '';
@@ -673,7 +716,6 @@ async function renderSlots(){
     return;
   }
   emptyNote.textContent = 'วันนี้ร้านปิดหรือคิวเต็มหมดแล้ว ลองเลือกวันอื่นดูนะครับ';
-  await loadLiveStatus();
   const busyToday = selectedDate === todayKey() && isBusyActive();
   if(busyToday){
     banner.textContent = `ช่างกำลังตัดคิวอยู่ คาดว่าจะว่างเวลา ${liveStatus.busyUntil} น. — คิวก่อนเวลานี้จองไม่ได้`;
@@ -682,7 +724,6 @@ async function renderSlots(){
     banner.classList.add('hidden');
   }
   const allSlots = generateSlotTimes();
-  const booked = await getBookings(selectedDate);
   const bookedTimes = new Set(booked.map(b=>b.time));
   grid.innerHTML = '';
   if(allSlots.length===0){
@@ -938,8 +979,6 @@ async function saveSettingsForm(){
 
 // ---------- INIT ----------
 (async function init(){
-  await loadSettings();
-  await loadLiveStatus();
   renderDateStrip();
   await renderSlots();
 })();
