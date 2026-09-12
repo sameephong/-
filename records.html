@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>บันทึกยอดประจำวัน</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-page:#F6F3F1;
+    --bg-hero:#141414;
+    --ink:#1C1C1C;
+    --ink-soft:#6B6560;
+    --accent:#D81E3A;
+    --accent-deep:#A3122A;
+    --surface:#FFFFFF;
+    --line:#E6DFDA;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg-page);color:var(--ink);font-family:'Sarabun',sans-serif;line-height:1.6;}
+  h1,h2,.display{font-family:'Prompt',sans-serif;margin:0;}
+  .wrap{max-width:640px;margin:0 auto;padding:0 16px 60px;}
+  .hero{background:var(--bg-hero);color:#F5F1E6;padding:28px 16px 22px;border-bottom:4px solid var(--accent);}
+  .hero-inner{max-width:640px;margin:0 auto;}
+  .shop-name{font-size:20px;font-weight:700;}
+  .tagline{font-size:13px;color:#B5A6A6;margin-top:4px;}
+
+  .section{margin-top:20px;}
+  .section-title{font-size:16px;font-weight:600;margin-bottom:10px;font-family:'Prompt',sans-serif;}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px;}
+  label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:4px;}
+  input[type=text],input[type=number],input[type=date],select{
+    width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:8px;
+    font-family:'Sarabun',sans-serif;font-size:15px;background:#FCFAF5;
+  }
+  .field{margin-bottom:10px;}
+  .row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .checks{display:flex;gap:16px;margin:8px 0;}
+  .checks label{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink);}
+  .checks input{width:auto;}
+  .net-line{font-family:'Prompt',sans-serif;font-size:13px;font-weight:600;color:var(--accent-deep);margin-bottom:10px;}
+  .quick-prices{display:flex;gap:6px;margin-top:6px;}
+  .quick-btn{flex:1;padding:7px;border-radius:6px;border:1px solid var(--line);background:#FCFAF5;
+    font-family:'Prompt',sans-serif;font-size:12px;font-weight:600;color:var(--ink-soft);cursor:pointer;}
+  .quick-btn:hover{border-color:var(--accent);color:var(--accent-deep);}
+
+  .btn{font-family:'Prompt',sans-serif;font-weight:600;font-size:15px;border:none;border-radius:8px;
+    padding:12px 18px;cursor:pointer;transition:opacity .15s;}
+  .btn:hover{opacity:.9;}
+  .btn-primary{background:var(--accent-deep);color:#fff;}
+  .btn-dark{background:var(--bg-hero);color:#F5F1E6;}
+  .btn-block{width:100%;}
+
+  .summary-card{background:var(--bg-hero);color:#F5F1E6;border-radius:12px;padding:16px;margin-top:6px;margin-bottom:14px;}
+  .summary-row{display:flex;justify-content:space-between;font-size:14px;padding:4px 0;}
+  .summary-row.total{font-family:'Prompt',sans-serif;font-weight:700;font-size:19px;color:#FFD400;border-top:1px solid #3A2426;margin-top:6px;padding-top:10px;}
+
+  .list-item{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line);gap:10px;}
+  .list-item:last-child{border-bottom:none;}
+  .li-title{font-size:14px;font-weight:600;}
+  .li-sub{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+  .li-amount{font-family:'Prompt',sans-serif;font-weight:700;white-space:nowrap;}
+  .li-actions{display:flex;gap:10px;margin-top:4px;}
+  .li-actions button{font-size:12px;color:var(--ink-soft);text-decoration:underline;background:none;border:none;cursor:pointer;padding:0;}
+  .empty-note{color:var(--ink-soft);font-size:14px;}
+  .edit-banner{background:#FBEAEA;border:1px solid var(--accent);border-left-width:4px;border-radius:8px;
+    padding:10px 12px;margin-bottom:12px;font-size:13px;color:var(--accent-deep);font-weight:600;
+    display:flex;justify-content:space-between;align-items:center;}
+  .edit-banner button{background:none;border:none;color:var(--accent-deep);text-decoration:underline;font-size:12px;cursor:pointer;}
+
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--bg-hero);color:#F5F1E6;
+    padding:12px 20px;border-radius:8px;font-size:14px;z-index:100;box-shadow:0 4px 14px rgba(0,0,0,.2);}
+  .hidden{display:none !important;}
+
+  .overlay{position:fixed;inset:0;background:rgba(20,20,20,.6);display:flex;align-items:center;justify-content:center;z-index:200;padding:16px;}
+  .modal-box{background:var(--surface);border-radius:14px;padding:20px;max-width:400px;width:100%;}
+  .modal-title{font-family:'Prompt',sans-serif;font-size:18px;font-weight:700;margin-bottom:8px;}
+  .modal-sub{font-size:13px;color:var(--ink-soft);margin-bottom:14px;}
+  .modal-preview{background:var(--bg-page);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:14px;}
+  .modal-preview .mp-row{display:flex;justify-content:space-between;padding:2px 0;}
+  .modal-btn-row{display:flex;flex-direction:column;gap:8px;}
+  .btn-cancel{background:transparent;border:1px solid var(--line);color:var(--ink-soft);}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="shop-name">บันทึกยอดประจำวัน</div>
+    <div class="tagline">กรอกทีละคน บันทึกทันที ปิดยอดตอนจบวัน</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="section">
+    <div class="row-2">
+      <div class="field">
+        <label for="recordDate">วันที่</label>
+        <input type="date" id="recordDate">
+      </div>
+      <div class="field">
+        <label for="recordBarber">ช่างเริ่มต้น</label>
+        <input type="text" id="recordBarber" placeholder="เช่น สมชาย">
+      </div>
+    </div>
+  </div>
+
+  <div class="summary-card">
+    <div class="summary-row"><span>จำนวนลูกค้า</span><span id="sumCount">0 หัว</span></div>
+    <div class="summary-row"><span>โอน</span><span id="sumTransfer">0 บาท</span></div>
+    <div class="summary-row"><span>เงินสด</span><span id="sumCash">0 บาท</span></div>
+    <div class="summary-row total"><span>ยอดรวม</span><span id="sumTotal">0 บาท</span></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title" id="formTitle">เพิ่มลูกค้าคนต่อไป</div>
+    <div id="editBanner" class="edit-banner hidden">
+      <span>กำลังแก้ไขลูกค้าคนที่เลือกไว้</span>
+      <button onclick="cancelEdit()">ยกเลิกแก้ไข</button>
+    </div>
+    <div class="card">
+      <div class="row-2">
+        <div class="field">
+          <label>ราคา (บาท)</label>
+          <input type="number" id="fPrice" inputmode="numeric" placeholder="เช่น 150">
+          <div class="quick-prices">
+            <button type="button" class="quick-btn" data-val="150">150</button>
+            <button type="button" class="quick-btn" data-val="120">120 (รีวิว)</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>วิธีจ่าย</label>
+          <select id="fPayment">
+            <option value="โอน">โอน</option>
+            <option value="เงินสด">เงินสด</option>
+            <option value="ผสม">ผสม (โอน+เงินสด)</option>
+          </select>
+        </div>
+      </div>
+      <div class="row-2 hidden" id="splitPaymentFields">
+        <div class="field">
+          <label>จำนวนเงินโอน</label>
+          <input type="number" id="fTransferAmount" inputmode="numeric" placeholder="0">
+        </div>
+        <div class="field">
+          <label>จำนวนเงินสด</label>
+          <input type="number" id="fCashAmount" inputmode="numeric" placeholder="0">
+        </div>
+      </div>
+      <div class="net-line hidden" id="splitMismatchWarning" style="color:#A3122A;">⚠️ ยอดโอน+เงินสด ต้องรวมเท่ากับราคาสุทธิ</div>
+      <div class="checks">
+        <label><input type="checkbox" id="fReview"> ส่วนลดรีวิว</label>
+        <label><input type="checkbox" id="fFree"> 5 ฟรี 1 (แลกฟรี)</label>
+      </div>
+      <div class="net-line">ราคาสุทธิ: <span id="fNetAmount">0 บาท</span></div>
+      <div class="row-2">
+        <div class="field">
+          <label>ช่าง</label>
+          <input type="text" id="fBarber" placeholder="เช่น สมชาย">
+        </div>
+        <div class="field">
+          <label>ทรงผม</label>
+          <input type="text" id="fHairstyle" placeholder="เช่น อันเดอร์คัต">
+        </div>
+      </div>
+      <div class="row-2">
+        <div class="field">
+          <label>เวลาเริ่ม</label>
+          <input type="text" id="fStart" placeholder="เช่น 14:30">
+        </div>
+        <div class="field">
+          <label>เวลาสิ้นสุด</label>
+          <input type="text" id="fEnd" placeholder="เช่น 15:10">
+        </div>
+      </div>
+      <div class="checks">
+        <label><input type="checkbox" id="fShave"> Shave (+50 บาท)</label>
+        <label><input type="checkbox" id="fShampoo"> Shampoo (+50 บาท)</label>
+      </div>
+      <div class="field">
+        <label>หมายเหตุ</label>
+        <input type="text" id="fNote" placeholder="เช่น ทิป, ย้อมสีผม, ชื่อย่อช่าง">
+      </div>
+      <button class="btn btn-primary btn-block" id="saveBtn" onclick="saveCustomer()">บันทึกลูกค้าคนนี้</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">รายการที่บันทึกวันนี้</div>
+    <div class="card" id="customerList">
+      <div class="empty-note">กำลังโหลด...</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <button class="btn btn-dark btn-block" onclick="openFinalizeModal()">ปิดยอดประจำวัน (ส่งสรุปเข้าไลน์)</button>
+  </div>
+
+</div>
+
+<!-- FINALIZE CONFIRM MODAL -->
+<div class="overlay hidden" id="finalizeModal">
+  <div class="modal-box">
+    <div class="modal-title">ยืนยันปิดยอดประจำวัน?</div>
+    <div class="modal-sub">ระบบจะส่งข้อความสรุปนี้เข้ากลุ่มไลน์ทันที <strong>ส่งแล้วเรียกคืนไม่ได้</strong> กรุณาเช็คให้ชัวร์ก่อนกดยืนยัน</div>
+    <div class="modal-preview" id="finalizePreview"></div>
+    <div class="field">
+      <label for="closedByName">ชื่อผู้ปิดยอด (บังคับกรอก)</label>
+      <input type="text" id="closedByName" placeholder="เช่น แซม">
+    </div>
+    <div class="modal-btn-row">
+      <button class="btn btn-cancel" onclick="closeFinalizeModal()">ยกเลิก (ข้อมูลลูกค้ายังอยู่ครบ)</button>
+      <button class="btn btn-primary" onclick="confirmFinalize()">ยืนยันปิดยอดประจำวันและส่งเข้าไลน์</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby126dqqPNVll4xsqa4GHA0YZ-k1qaujo14d2RhU8U7hen5bgxxVCpLJoiLiZNdVtzD/exec";
+
+let todayList = [];
+let editingId = null;
+
+function pad(n){ return n.toString().padStart(2,'0'); }
+function todayStr(){
+  const d = new Date();
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+function showToast(msg){
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 2800);
+}
+
+// ---------- โหลดรายการของวันที่เลือก (เผื่อปิดแท็บไปก่อนหน้านี้แล้วกลับมาทำต่อ) ----------
+async function loadDateData(){
+  const date = document.getElementById('recordDate').value;
+  if (!date) return;
+  editingId = null;
+  document.getElementById('editBanner').classList.add('hidden');
+  document.getElementById('formTitle').textContent = 'เพิ่มลูกค้าคนต่อไป';
+  document.getElementById('saveBtn').textContent = 'บันทึกลูกค้าคนนี้';
+  document.getElementById('customerList').innerHTML = '<div class="empty-note">กำลังโหลด...</div>';
+  try{
+    const res = await fetch(APPS_SCRIPT_URL + '?action=getRecordsForDate&date=' + date);
+    const data = await res.json();
+    todayList = data.records || [];
+  }catch(e){
+    todayList = [];
+  }
+  renderList();
+  updateSummary();
+}
+
+function formatTimeRange_(r){
+  if (!r.startTime) return '';
+  if (!r.endTime) return 'เริ่ม ' + r.startTime;
+  const mins = timeDiffMinutes_(r.startTime, r.endTime);
+  const durationText = mins !== null ? ' (ใช้เวลา ' + mins + ' นาที)' : '';
+  return r.startTime + '-' + r.endTime + durationText;
+}
+function timeDiffMinutes_(start, end){
+  const m1 = /^(\d{1,2}):(\d{2})$/.exec(start);
+  const m2 = /^(\d{1,2}):(\d{2})$/.exec(end);
+  if (!m1 || !m2) return null;
+  let diff = (Number(m2[1]) * 60 + Number(m2[2])) - (Number(m1[1]) * 60 + Number(m1[2]));
+  if (diff < 0) diff += 24 * 60; // เผื่อกรณีข้ามเที่ยงคืน
+  return diff;
+}
+
+function renderList(){
+  const el = document.getElementById('customerList');
+  if (todayList.length === 0){
+    el.innerHTML = '<div class="empty-note">ยังไม่มีลูกค้าที่บันทึกวันนี้</div>';
+    return;
+  }
+  el.innerHTML = todayList.map(function(r, i){
+    const timeRange = formatTimeRange_(r);
+    const sub = [r.barber, timeRange].filter(Boolean).join(' · ');
+    const freeTag = r.freeReward ? ' (5 ฟรี 1)' : '';
+    const paymentLine = r.freeReward ? '' : (r.paymentMethod
+      ? '<div class="li-sub">💰 ' + (r.paymentMethod === 'ผสม'
+          ? `ผสม (โอน ${Number(r.transferAmount||0).toLocaleString()} / สด ${Number(r.cashAmount||0).toLocaleString()})`
+          : r.paymentMethod) + '</div>'
+      : '');
+    const extras = [];
+    if (r.shave) extras.push('Shave');
+    if (r.shampoo) extras.push('Shampoo');
+    const extrasLine = extras.length ? '<div class="li-sub">' + extras.join(' + ') + '</div>' : '';
+    const noteLine = r.note ? '<div class="li-sub">📝 ' + r.note + '</div>' : '';
+    return '<div class="list-item"><div><div class="li-title">' + (i + 1) + '. ' + (r.hairstyle || 'ไม่ระบุทรง') + freeTag + '</div>' +
+      (sub ? '<div class="li-sub">' + sub + '</div>' : '') +
+      paymentLine + extrasLine + noteLine +
+      '<div class="li-actions"><button onclick="startEdit(\'' + r.id + '\')">แก้ไข</button><button onclick="quickDelete(\'' + r.id + '\')">ลบ</button></div></div>' +
+      '<div class="li-amount">' + Number(r.price).toLocaleString() + ' บาท</div></div>';
+  }).join('');
+}
+
+function updateSummary(){
+  let count = 0, total = 0, transfer = 0, cash = 0;
+  todayList.forEach(function(r){
+    count++;
+    const price = Number(r.price) || 0;
+    total += price;
+    if (r.paymentMethod === 'ผสม'){
+      transfer += Number(r.transferAmount) || 0;
+      cash += Number(r.cashAmount) || 0;
+    } else if (r.paymentMethod === 'โอน') transfer += price;
+    else if (r.paymentMethod === 'เงินสด') cash += price;
+  });
+  document.getElementById('sumCount').textContent = count + ' หัว';
+  document.getElementById('sumTransfer').textContent = transfer.toLocaleString() + ' บาท';
+  document.getElementById('sumCash').textContent = cash.toLocaleString() + ' บาท';
+  document.getElementById('sumTotal').textContent = total.toLocaleString() + ' บาท';
+}
+
+// ---------- ฟอร์มเพิ่มลูกค้า ----------
+function computeNet(){
+  if (document.getElementById('fFree').checked) return 0;
+  const base = Number(document.getElementById('fPrice').value) || 0;
+  const shave = document.getElementById('fShave').checked ? 50 : 0;
+  const shampoo = document.getElementById('fShampoo').checked ? 50 : 0;
+  return base + shave + shampoo;
+}
+function refreshNet(){
+  document.getElementById('fNetAmount').textContent = computeNet().toLocaleString() + ' บาท';
+  refreshSplitPaymentUI();
+}
+
+// แสดง/ซ่อนช่องแยกโอน-เงินสด และเช็คว่ายอดรวมตรงกับราคาสุทธิมั้ย
+function refreshSplitPaymentUI(){
+  const isMixed = document.getElementById('fPayment').value === 'ผสม';
+  document.getElementById('splitPaymentFields').classList.toggle('hidden', !isMixed);
+  if (!isMixed){
+    document.getElementById('splitMismatchWarning').classList.add('hidden');
+    return;
+  }
+  const net = computeNet();
+  const t = Number(document.getElementById('fTransferAmount').value) || 0;
+  const c = Number(document.getElementById('fCashAmount').value) || 0;
+  document.getElementById('splitMismatchWarning').classList.toggle('hidden', (t + c) === net);
+}
+function isSplitPaymentValid(){
+  if (document.getElementById('fPayment').value !== 'ผสม') return true;
+  const net = computeNet();
+  const t = Number(document.getElementById('fTransferAmount').value) || 0;
+  const c = Number(document.getElementById('fCashAmount').value) || 0;
+  return (t + c) === net;
+}
+
+document.getElementById('fPrice').addEventListener('input', function(){
+  if (this.value === '120') document.getElementById('fReview').checked = true;
+  else if (this.value === '150') document.getElementById('fReview').checked = false;
+  refreshNet();
+});
+document.querySelectorAll('.quick-btn').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    document.getElementById('fPrice').value = btn.dataset.val;
+    document.getElementById('fPrice').dispatchEvent(new Event('input'));
+  });
+});
+document.getElementById('fFree').addEventListener('change', function(){
+  const isFree = this.checked;
+  document.getElementById('fPrice').disabled = isFree;
+  document.getElementById('fPayment').disabled = isFree;
+  document.getElementById('fReview').disabled = isFree;
+  if (isFree){
+    document.getElementById('fPrice').value = '';
+    document.getElementById('fReview').checked = false;
+  }
+  refreshNet();
+});
+['fReview','fShave','fShampoo','fPayment','fTransferAmount','fCashAmount'].forEach(function(id){
+  document.getElementById(id).addEventListener('input', refreshNet);
+  document.getElementById(id).addEventListener('change', refreshNet);
+});
+
+function resetForm(){
+  document.getElementById('fPrice').value = '';
+  document.getElementById('fPrice').disabled = false;
+  document.getElementById('fPayment').value = 'โอน';
+  document.getElementById('fPayment').disabled = false;
+  document.getElementById('fReview').checked = false;
+  document.getElementById('fReview').disabled = false;
+  document.getElementById('fFree').checked = false;
+  document.getElementById('fHairstyle').value = '';
+  document.getElementById('fStart').value = '';
+  document.getElementById('fEnd').value = '';
+  document.getElementById('fShave').checked = false;
+  document.getElementById('fShampoo').checked = false;
+  document.getElementById('fNote').value = '';
+  document.getElementById('fTransferAmount').value = '';
+  document.getElementById('fCashAmount').value = '';
+  refreshNet();
+}
+
+// ---------- แก้ไข / ลบลูกค้าที่บันทึกไปแล้ว ----------
+function startEdit(id){
+  const r = todayList.find(function(x){ return x.id === id; });
+  if (!r) return;
+  editingId = id;
+  document.getElementById('formTitle').textContent = 'แก้ไขข้อมูลลูกค้า';
+  document.getElementById('editBanner').classList.remove('hidden');
+  document.getElementById('saveBtn').textContent = 'บันทึกการแก้ไข';
+
+  document.getElementById('fFree').checked = !!r.freeReward;
+  document.getElementById('fPrice').disabled = !!r.freeReward;
+  document.getElementById('fPayment').disabled = !!r.freeReward;
+  document.getElementById('fReview').disabled = !!r.freeReward;
+  const basePrice = r.freeReward ? '' : (Number(r.price) || 0) - (r.shave ? 50 : 0) - (r.shampoo ? 50 : 0);
+  document.getElementById('fPrice').value = basePrice;
+  document.getElementById('fPayment').value = r.paymentMethod || 'โอน';
+  document.getElementById('fReview').checked = !!r.reviewDiscount;
+  document.getElementById('fBarber').value = r.barber || '';
+  document.getElementById('fHairstyle').value = r.hairstyle || '';
+  document.getElementById('fStart').value = r.startTime || '';
+  document.getElementById('fEnd').value = r.endTime || '';
+  document.getElementById('fShave').checked = !!r.shave;
+  document.getElementById('fShampoo').checked = !!r.shampoo;
+  document.getElementById('fNote').value = r.note || '';
+  document.getElementById('fTransferAmount').value = r.paymentMethod === 'ผสม' ? (r.transferAmount || '') : '';
+  document.getElementById('fCashAmount').value = r.paymentMethod === 'ผสม' ? (r.cashAmount || '') : '';
+  refreshNet();
+  document.querySelector('.card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function cancelEdit(){
+  editingId = null;
+  document.getElementById('formTitle').textContent = 'เพิ่มลูกค้าคนต่อไป';
+  document.getElementById('editBanner').classList.add('hidden');
+  document.getElementById('saveBtn').textContent = 'บันทึกลูกค้าคนนี้';
+  resetForm();
+}
+
+async function quickDelete(id){
+  if (!confirm('ลบรายการลูกค้าคนนี้ใช่มั้ย?')) return;
+  try{
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'deleteRecord', id: id })
+    });
+    todayList = todayList.filter(function(x){ return x.id !== id; });
+    renderList();
+    updateSummary();
+    if (editingId === id) cancelEdit();
+    showToast('ลบรายการแล้ว');
+  }catch(e){
+    showToast('ลบไม่สำเร็จ ลองใหม่อีกครั้ง');
+  }
+}
+
+// ---------- บันทึกลูกค้า 1 คนทันที (ไม่ส่งเข้าไลน์) หรือแก้ไขคนที่เลือกไว้ ----------
+async function saveCustomer(){
+  const date = document.getElementById('recordDate').value;
+  if (!date){ showToast('กรุณาเลือกวันที่'); return; }
+
+  const free = document.getElementById('fFree').checked;
+  const base = Number(document.getElementById('fPrice').value) || 0;
+  if (!free && base <= 0){ showToast('กรุณาเลือกราคา หรือติ๊ก "5 ฟรี 1"'); return; }
+  if (!isSplitPaymentValid()){ showToast('ยอดโอน+เงินสด ต้องรวมเท่ากับราคาสุทธิ'); return; }
+
+  const fields = {
+    price: computeNet(),
+    paymentMethod: free ? '' : document.getElementById('fPayment').value,
+    reviewDiscount: document.getElementById('fReview').checked,
+    freeReward: free,
+    barber: document.getElementById('fBarber').value.trim(),
+    hairstyle: document.getElementById('fHairstyle').value.trim(),
+    startTime: document.getElementById('fStart').value || null,
+    endTime: document.getElementById('fEnd').value || null,
+    shave: document.getElementById('fShave').checked,
+    shampoo: document.getElementById('fShampoo').checked,
+    note: document.getElementById('fNote').value.trim(),
+    transferAmount: (!free && document.getElementById('fPayment').value === 'ผสม') ? Number(document.getElementById('fTransferAmount').value) || 0 : null,
+    cashAmount: (!free && document.getElementById('fPayment').value === 'ผสม') ? Number(document.getElementById('fCashAmount').value) || 0 : null
+  };
+
+  if (editingId){
+    try{
+      await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(Object.assign({ action: 'updateRecord', id: editingId }, fields))
+      });
+      const idx = todayList.findIndex(function(x){ return x.id === editingId; });
+      if (idx > -1) todayList[idx] = Object.assign({}, todayList[idx], fields);
+      renderList();
+      updateSummary();
+      showToast('แก้ไขข้อมูลแล้ว');
+      cancelEdit();
+    }catch(e){
+      showToast('แก้ไขไม่สำเร็จ ลองใหม่อีกครั้ง');
+    }
+    return;
+  }
+
+  const row = Object.assign({ no: todayList.length + 1 }, fields);
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        action: 'addRecords',
+        date: date,
+        barber: document.getElementById('recordBarber').value.trim(),
+        rows: [row]
+      })
+    });
+    const result = await res.json();
+    row.id = (result.ids && result.ids[0]) || null;
+    todayList.push(row);
+    renderList();
+    updateSummary();
+    resetForm();
+    showToast('บันทึกแล้ว เพิ่มคนต่อไปได้เลย');
+  }catch(e){
+    showToast('บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง');
+  }
+}
+
+// ---------- ปิดยอดประจำวัน: ส่งสรุปทั้งวันเข้าไลน์ครั้งเดียว (มีหน้าต่างให้เช็คก่อนยืนยันเสมอ) ----------
+function openFinalizeModal(){
+  const date = document.getElementById('recordDate').value;
+  if (!date){ showToast('กรุณาเลือกวันที่'); return; }
+  if (todayList.length === 0){ showToast('ยังไม่มีลูกค้าที่บันทึกไว้เลย'); return; }
+
+  let total = 0, transfer = 0, cash = 0;
+  todayList.forEach(function(r){
+    const price = Number(r.price) || 0;
+    total += price;
+    if (r.paymentMethod === 'ผสม'){
+      transfer += Number(r.transferAmount) || 0;
+      cash += Number(r.cashAmount) || 0;
+    } else if (r.paymentMethod === 'โอน') transfer += price;
+    else if (r.paymentMethod === 'เงินสด') cash += price;
+  });
+
+  document.getElementById('finalizePreview').innerHTML =
+    '<div class="mp-row"><span>วันที่</span><span>' + date + '</span></div>' +
+    '<div class="mp-row"><span>จำนวนลูกค้า</span><span>' + todayList.length + ' หัว</span></div>' +
+    '<div class="mp-row"><span>โอน</span><span>' + transfer.toLocaleString() + ' บาท</span></div>' +
+    '<div class="mp-row"><span>เงินสด</span><span>' + cash.toLocaleString() + ' บาท</span></div>' +
+    '<div class="mp-row"><strong>ยอดรวม</strong><strong>' + total.toLocaleString() + ' บาท</strong></div>';
+
+  document.getElementById('finalizeModal').classList.remove('hidden');
+}
+
+function closeFinalizeModal(){
+  document.getElementById('finalizeModal').classList.add('hidden');
+}
+
+async function confirmFinalize(){
+  const date = document.getElementById('recordDate').value;
+  const closedBy = document.getElementById('closedByName').value.trim();
+  if (!closedBy){ showToast('กรุณากรอกชื่อผู้ปิดยอดก่อน'); return; }
+  closeFinalizeModal();
+  try{
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'finalizeDay', date: date, closedBy: closedBy })
+    });
+    showToast('ส่งสรุปยอดประจำวันเข้ากลุ่มไลน์แล้ว');
+    document.getElementById('closedByName').value = '';
+  }catch(e){
+    showToast('ส่งสรุปไม่สำเร็จ ลองใหม่อีกครั้ง');
+  }
+}
+
+// ---------- INIT ----------
+document.getElementById('recordDate').value = todayStr();
+document.getElementById('recordDate').addEventListener('change', loadDateData);
+refreshNet();
+loadDateData();
+</script>
+</body>
+</html>
