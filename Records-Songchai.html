@@ -135,9 +135,21 @@
           <select id="fPayment">
             <option value="โอน">โอน</option>
             <option value="เงินสด">เงินสด</option>
+            <option value="ผสม">ผสม (โอน+เงินสด)</option>
           </select>
         </div>
       </div>
+      <div class="row-2 hidden" id="splitPaymentFields">
+        <div class="field">
+          <label>จำนวนเงินโอน</label>
+          <input type="number" id="fTransferAmount" inputmode="numeric" placeholder="0">
+        </div>
+        <div class="field">
+          <label>จำนวนเงินสด</label>
+          <input type="number" id="fCashAmount" inputmode="numeric" placeholder="0">
+        </div>
+      </div>
+      <div class="net-line hidden" id="splitMismatchWarning" style="color:#A3122A;">⚠️ ยอดโอน+เงินสด ต้องรวมเท่ากับราคาสุทธิ</div>
       <div class="checks">
         <label><input type="checkbox" id="fReview"> ส่วนลดรีวิว</label>
         <label><input type="checkbox" id="fFree"> 5 ฟรี 1 (แลกฟรี)</label>
@@ -270,7 +282,11 @@ function renderList(){
     const timeRange = formatTimeRange_(r);
     const sub = [r.barber, timeRange].filter(Boolean).join(' · ');
     const freeTag = r.freeReward ? ' (5 ฟรี 1)' : '';
-    const paymentLine = r.freeReward ? '' : (r.paymentMethod ? '<div class="li-sub">💰 ' + r.paymentMethod + '</div>' : '');
+    const paymentLine = r.freeReward ? '' : (r.paymentMethod
+      ? '<div class="li-sub">💰 ' + (r.paymentMethod === 'ผสม'
+          ? `ผสม (โอน ${Number(r.transferAmount||0).toLocaleString()} / สด ${Number(r.cashAmount||0).toLocaleString()})`
+          : r.paymentMethod) + '</div>'
+      : '');
     const extras = [];
     if (r.shave) extras.push('Shave');
     if (r.shampoo) extras.push('Shampoo');
@@ -290,7 +306,10 @@ function updateSummary(){
     count++;
     const price = Number(r.price) || 0;
     total += price;
-    if (r.paymentMethod === 'โอน') transfer += price;
+    if (r.paymentMethod === 'ผสม'){
+      transfer += Number(r.transferAmount) || 0;
+      cash += Number(r.cashAmount) || 0;
+    } else if (r.paymentMethod === 'โอน') transfer += price;
     else if (r.paymentMethod === 'เงินสด') cash += price;
   });
   document.getElementById('sumCount').textContent = count + ' หัว';
@@ -309,6 +328,28 @@ function computeNet(){
 }
 function refreshNet(){
   document.getElementById('fNetAmount').textContent = computeNet().toLocaleString() + ' บาท';
+  refreshSplitPaymentUI();
+}
+
+// แสดง/ซ่อนช่องแยกโอน-เงินสด และเช็คว่ายอดรวมตรงกับราคาสุทธิมั้ย
+function refreshSplitPaymentUI(){
+  const isMixed = document.getElementById('fPayment').value === 'ผสม';
+  document.getElementById('splitPaymentFields').classList.toggle('hidden', !isMixed);
+  if (!isMixed){
+    document.getElementById('splitMismatchWarning').classList.add('hidden');
+    return;
+  }
+  const net = computeNet();
+  const t = Number(document.getElementById('fTransferAmount').value) || 0;
+  const c = Number(document.getElementById('fCashAmount').value) || 0;
+  document.getElementById('splitMismatchWarning').classList.toggle('hidden', (t + c) === net);
+}
+function isSplitPaymentValid(){
+  if (document.getElementById('fPayment').value !== 'ผสม') return true;
+  const net = computeNet();
+  const t = Number(document.getElementById('fTransferAmount').value) || 0;
+  const c = Number(document.getElementById('fCashAmount').value) || 0;
+  return (t + c) === net;
 }
 
 document.getElementById('fPrice').addEventListener('input', function(){
@@ -333,7 +374,8 @@ document.getElementById('fFree').addEventListener('change', function(){
   }
   refreshNet();
 });
-['fReview','fShave','fShampoo','fPayment'].forEach(function(id){
+['fReview','fShave','fShampoo','fPayment','fTransferAmount','fCashAmount'].forEach(function(id){
+  document.getElementById(id).addEventListener('input', refreshNet);
   document.getElementById(id).addEventListener('change', refreshNet);
 });
 
@@ -351,6 +393,8 @@ function resetForm(){
   document.getElementById('fShave').checked = false;
   document.getElementById('fShampoo').checked = false;
   document.getElementById('fNote').value = '';
+  document.getElementById('fTransferAmount').value = '';
+  document.getElementById('fCashAmount').value = '';
   refreshNet();
 }
 
@@ -378,6 +422,8 @@ function startEdit(id){
   document.getElementById('fShave').checked = !!r.shave;
   document.getElementById('fShampoo').checked = !!r.shampoo;
   document.getElementById('fNote').value = r.note || '';
+  document.getElementById('fTransferAmount').value = r.paymentMethod === 'ผสม' ? (r.transferAmount || '') : '';
+  document.getElementById('fCashAmount').value = r.paymentMethod === 'ผสม' ? (r.cashAmount || '') : '';
   refreshNet();
   document.querySelector('.card').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -416,6 +462,7 @@ async function saveCustomer(){
   const free = document.getElementById('fFree').checked;
   const base = Number(document.getElementById('fPrice').value) || 0;
   if (!free && base <= 0){ showToast('กรุณาเลือกราคา หรือติ๊ก "5 ฟรี 1"'); return; }
+  if (!isSplitPaymentValid()){ showToast('ยอดโอน+เงินสด ต้องรวมเท่ากับราคาสุทธิ'); return; }
 
   const fields = {
     price: computeNet(),
@@ -428,7 +475,9 @@ async function saveCustomer(){
     endTime: document.getElementById('fEnd').value || null,
     shave: document.getElementById('fShave').checked,
     shampoo: document.getElementById('fShampoo').checked,
-    note: document.getElementById('fNote').value.trim()
+    note: document.getElementById('fNote').value.trim(),
+    transferAmount: (!free && document.getElementById('fPayment').value === 'ผสม') ? Number(document.getElementById('fTransferAmount').value) || 0 : null,
+    cashAmount: (!free && document.getElementById('fPayment').value === 'ผสม') ? Number(document.getElementById('fCashAmount').value) || 0 : null
   };
 
   if (editingId){
@@ -484,7 +533,10 @@ function openFinalizeModal(){
   todayList.forEach(function(r){
     const price = Number(r.price) || 0;
     total += price;
-    if (r.paymentMethod === 'โอน') transfer += price;
+    if (r.paymentMethod === 'ผสม'){
+      transfer += Number(r.transferAmount) || 0;
+      cash += Number(r.cashAmount) || 0;
+    } else if (r.paymentMethod === 'โอน') transfer += price;
     else if (r.paymentMethod === 'เงินสด') cash += price;
   });
 
