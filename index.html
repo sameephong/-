@@ -618,16 +618,27 @@ async function applyQuickBusy(val){
   const busyInput = document.getElementById('busyUntilInput');
   if(busyInput) busyInput.value = val;
 }
+// คืนเวลาเริ่มต้นสำหรับคำนวณ "ไม่ว่างเพิ่ม" — ถ้ามีสถานะไม่ว่างของวันนี้ค้างอยู่แล้วและยังไม่หมดเวลา
+// ให้บวกเวลาต่อจากเวลานั้นเลย (ไม่ใช่นับจาก "ตอนนี้" ใหม่ ซึ่งจะทำให้เวลาสั้นลงกว่าที่ควรจะเป็น)
+function getBusyBaseTime_(){
+  if (liveStatus.dateKey === todayKey() && liveStatus.busyUntil && liveStatus.busyUntil > nowStr()){
+    const parts = liveStatus.busyUntil.split(':').map(Number);
+    const base = new Date();
+    base.setHours(parts[0], parts[1], 0, 0);
+    return base;
+  }
+  return new Date();
+}
 function quickBusyPreset(minutes){
-  const target = new Date(Date.now() + minutes*60000);
+  const target = new Date(getBusyBaseTime_().getTime() + minutes*60000);
   applyQuickBusy(`${pad(target.getHours())}:${pad(target.getMinutes())}`);
 }
 function quickBusyByPeopleCount(people){
   const perPerson = Number(settings.slotMinutes) || 40;
   const minutesToAdd = people * perPerson;
-  const target = new Date(Date.now() + minutesToAdd*60000);
+  const target = new Date(getBusyBaseTime_().getTime() + minutesToAdd*60000);
   applyQuickBusy(`${pad(target.getHours())}:${pad(target.getMinutes())}`);
-  showToast(`แจ้งลูกค้า ${people} คน × ${perPerson} นาที = ว่างอีก ${minutesToAdd} นาที`);
+  showToast(`เพิ่มลูกค้า ${people} คน × ${perPerson} นาที = ไม่ว่างเพิ่มอีก ${minutesToAdd} นาที`);
 }
 function quickBusyCustomSubmit(){
   const val = document.getElementById('quickBusyTime').value.trim();
