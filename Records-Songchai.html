@@ -49,6 +49,7 @@
     padding:12px 18px;cursor:pointer;transition:opacity .15s;}
   .btn:hover{opacity:.9;}
   .btn-primary{background:var(--accent-deep);color:#fff;}
+  .btn.btn-saving, .btn.btn-saving:disabled{background:#1E8449;color:#fff;cursor:wait;opacity:1;}
   .btn-dark{background:var(--bg-hero);color:#F5F1E6;}
   .btn-block{width:100%;}
 
@@ -222,6 +223,7 @@ const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby126dqqPNVll4x
 
 let todayList = [];
 let editingId = null;
+let isSaving = false;
 
 function pad(n){ return n.toString().padStart(2,'0'); }
 function todayStr(){
@@ -243,7 +245,7 @@ async function loadDateData(){
   editingId = null;
   document.getElementById('editBanner').classList.add('hidden');
   document.getElementById('formTitle').textContent = 'เพิ่มลูกค้าคนต่อไป';
-  document.getElementById('saveBtn').textContent = 'บันทึกลูกค้าคนนี้';
+  if (!isSaving) setSaveBtn_('idle');
   document.getElementById('customerList').innerHTML = '<div class="empty-note">กำลังโหลด...</div>';
   try{
     const res = await fetch(APPS_SCRIPT_URL + '?action=getRecordsForDate&date=' + date);
@@ -405,7 +407,7 @@ function startEdit(id){
   editingId = id;
   document.getElementById('formTitle').textContent = 'แก้ไขข้อมูลลูกค้า';
   document.getElementById('editBanner').classList.remove('hidden');
-  document.getElementById('saveBtn').textContent = 'บันทึกการแก้ไข';
+  if (!isSaving) setSaveBtn_('idle');
 
   document.getElementById('fFree').checked = !!r.freeReward;
   document.getElementById('fPrice').disabled = !!r.freeReward;
@@ -432,7 +434,7 @@ function cancelEdit(){
   editingId = null;
   document.getElementById('formTitle').textContent = 'เพิ่มลูกค้าคนต่อไป';
   document.getElementById('editBanner').classList.add('hidden');
-  document.getElementById('saveBtn').textContent = 'บันทึกลูกค้าคนนี้';
+  if (!isSaving) setSaveBtn_('idle');
   resetForm();
 }
 
@@ -480,21 +482,30 @@ async function saveCustomer(){
     cashAmount: (!free && document.getElementById('fPayment').value === 'ผสม') ? Number(document.getElementById('fCashAmount').value) || 0 : null
   };
 
+  // กันกดซ้ำ: ถ้ากำลังบันทึกอยู่ ไม่รับคลิกเพิ่ม (สาเหตุของข้อมูลซ้ำเวลาระบบตอบช้า)
+  if (isSaving) return;
+  isSaving = true;
+  setSaveBtn_('saving');
+
   if (editingId){
     try{
-      await fetch(APPS_SCRIPT_URL, {
+      const res = await fetch(APPS_SCRIPT_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify(Object.assign({ action: 'updateRecord', id: editingId }, fields))
       });
+      const result = await res.json();
+      if (!result.ok) throw new Error(result.error || 'บันทึกไม่สำเร็จ');
       const idx = todayList.findIndex(function(x){ return x.id === editingId; });
       if (idx > -1) todayList[idx] = Object.assign({}, todayList[idx], fields);
       renderList();
       updateSummary();
-      showToast('แก้ไขข้อมูลแล้ว');
       cancelEdit();
+      finishSave_('แก้ไขเสร็จแล้ว ✓');
     }catch(e){
-      showToast('แก้ไขไม่สำเร็จ ลองใหม่อีกครั้ง');
+      isSaving = false;
+      setSaveBtn_('idle');
+      showToast('แก้ไขไม่สำเร็จ: ' + e.message);
     }
     return;
   }
@@ -512,15 +523,44 @@ async function saveCustomer(){
       })
     });
     const result = await res.json();
+    if (!result.ok) throw new Error(result.error || 'บันทึกไม่สำเร็จ');
     row.id = (result.ids && result.ids[0]) || null;
     todayList.push(row);
     renderList();
     updateSummary();
     resetForm();
-    showToast('บันทึกแล้ว เพิ่มคนต่อไปได้เลย');
+    finishSave_('บันทึกเสร็จแล้ว ✓ เพิ่มคนต่อไปได้เลย');
   }catch(e){
-    showToast('บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง');
+    isSaving = false;
+    setSaveBtn_('idle');
+    showToast('บันทึกไม่สำเร็จ: ' + e.message + ' (เช็ครายการด้านล่างก่อนกดบันทึกซ้ำ)');
   }
+}
+
+// ---------- สถานะปุ่มบันทึก: ปกติ(แดง) → รอสักครู่(เขียว) → บันทึกเสร็จแล้ว(เขียว) → กลับเป็นปกติ ----------
+function setSaveBtn_(state){
+  const btn = document.getElementById('saveBtn');
+  btn.classList.remove('btn-saving');
+  if (state === 'saving'){
+    btn.disabled = true;
+    btn.classList.add('btn-saving');
+    btn.textContent = '⏳ รอสักครู่...';
+  } else if (state === 'done'){
+    btn.disabled = true;
+    btn.classList.add('btn-saving');
+    btn.textContent = '✓ บันทึกเสร็จแล้ว';
+  } else {
+    btn.disabled = false;
+    btn.textContent = editingId ? 'บันทึกการแก้ไข' : 'บันทึกลูกค้าคนนี้';
+  }
+}
+function finishSave_(message){
+  setSaveBtn_('done');
+  showToast(message);
+  setTimeout(function(){
+    isSaving = false;
+    setSaveBtn_('idle');
+  }, 1500);
 }
 
 // ---------- ปิดยอดประจำวัน: ส่งสรุปทั้งวันเข้าไลน์ครั้งเดียว (มีหน้าต่างให้เช็คก่อนยืนยันเสมอ) ----------
