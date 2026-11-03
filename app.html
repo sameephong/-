@@ -195,7 +195,7 @@
       <button type="button" class="top-tab" data-tab="records">บันทึกยอด</button>
       <button type="button" class="top-tab" data-tab="finance">รายรับรายจ่าย</button>
     </div>
-    <div class="ver">เวอร์ชัน 3 · แอปรวม</div>
+    <div class="ver">เวอร์ชัน 4 · แอปรวม</div>
   </div>
 </div>
 
@@ -342,6 +342,10 @@
 
 <!-- MAIN CONTENT -->
 <div class="wrap hidden" id="mainContent">
+
+  <div style="display:flex;justify-content:flex-end;padding-top:12px;">
+    <button type="button" class="btn btn-secondary" style="padding:8px 14px;font-size:13px;" onclick="lockFinance_(true)">🔒 ออกจากระบบ</button>
+  </div>
 
   <div class="section">
     <div class="row-2">
@@ -1059,6 +1063,15 @@ function unlockFinance_(){
   document.getElementById('pinScreen').classList.add('hidden');
   document.getElementById('mainContent').classList.remove('hidden');
   if (!financeReady){ financeReady = true; initMainContent(); }
+  else { try{ loadSummary(); }catch(e){} }
+}
+// ล็อกหน้ารายรับรายจ่าย (ออกจากระบบ) — ต้องใส่ PIN ใหม่ถึงจะดูได้
+function lockFinance_(goRecords){
+  try{ sessionStorage.removeItem('sj_pin_ok'); }catch(e){}
+  document.getElementById('mainContent').classList.add('hidden');
+  document.getElementById('pinScreen').classList.remove('hidden');
+  const pi = document.getElementById('pinInput'); if (pi) pi.value = '';
+  if (goRecords) showTab('records');
 }
 function initMainContent(){
   document.getElementById('expDate').value = todayStr();
@@ -1075,6 +1088,10 @@ const TABS = {
 };
 function showTab(name){
   if (!TABS[name]) name = 'records';
+  // ออกจากหน้ารายรับรายจ่าย = ล็อกอัตโนมัติ
+  if (name !== 'finance' && !document.getElementById('view-finance').classList.contains('hidden')){
+    lockFinance_(false);
+  }
   document.getElementById('view-records').classList.toggle('hidden', name !== 'records');
   document.getElementById('view-finance').classList.toggle('hidden', name !== 'finance');
   document.getElementById('heroTitle').textContent = TABS[name].title;
