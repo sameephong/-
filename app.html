@@ -169,6 +169,10 @@
   /* ---- รวมแอป: แถบเมนูล่าง + ปรับให้เป็นแอป ---- */
   body{padding-bottom:calc(76px + env(safe-area-inset-bottom));-webkit-text-size-adjust:100%;}
   .hero{padding-top:calc(28px + env(safe-area-inset-top));}
+  .top-tabs{display:flex;gap:8px;margin-top:14px;}
+  .top-tab{flex:1;height:40px;border-radius:10px;border:1px solid #5a4a4a;background:transparent;color:#F5F1E6;font-family:'Prompt',sans-serif;font-size:14px;font-weight:500;cursor:pointer;}
+  .top-tab.active{background:#F5F1E6;color:#141414;border-color:#F5F1E6;}
+  .ver{font-size:11px;color:#8d7f7f;margin-top:8px;}
   .toast{bottom:calc(88px + env(safe-area-inset-bottom));}
   .bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:150;background:var(--bg-hero);
     display:flex;padding-bottom:env(safe-area-inset-bottom);box-shadow:0 -2px 12px rgba(0,0,0,.18);}
@@ -187,6 +191,11 @@
   <div class="hero-inner">
     <div class="shop-name" id="heroTitle">บันทึกยอดประจำวัน</div>
     <div class="tagline" id="heroTag">กรอกทีละคน บันทึกทันที ปิดยอดตอนจบวัน</div>
+    <div class="top-tabs">
+      <button type="button" class="top-tab" data-tab="records">บันทึกยอด</button>
+      <button type="button" class="top-tab" data-tab="finance">รายรับรายจ่าย</button>
+    </div>
+    <div class="ver">เวอร์ชัน 3 · แอปรวม</div>
   </div>
 </div>
 
@@ -1070,7 +1079,7 @@ function showTab(name){
   document.getElementById('view-finance').classList.toggle('hidden', name !== 'finance');
   document.getElementById('heroTitle').textContent = TABS[name].title;
   document.getElementById('heroTag').textContent = TABS[name].tag;
-  document.querySelectorAll('.nav-btn').forEach(function(b){
+  document.querySelectorAll('.nav-btn, .top-tab').forEach(function(b){
     const on = b.dataset.tab === name;
     b.classList.toggle('active', on);
     if (on) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current');
@@ -1083,7 +1092,7 @@ function showTab(name){
   try{ localStorage.setItem('sj_last_tab', name); }catch(e){}
   window.scrollTo(0,0);
 }
-document.querySelectorAll('.nav-btn').forEach(function(b){
+document.querySelectorAll('.nav-btn, .top-tab').forEach(function(b){
   b.addEventListener('click', function(){ showTab(b.dataset.tab); });
 });
 (function(){
