@@ -1,5 +1,5 @@
 // ทรงชาย แอปร้าน: โหลดจากเน็ตก่อนเสมอ (ได้ของใหม่ทุกครั้งที่แก้ไฟล์) ถ้าออฟไลน์ค่อยใช้ของที่เก็บไว้
-const CACHE = 'songchai-app-v2';
+const CACHE = 'songchai-app-v8';
 const SHELL = ['./app.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', function (e) {
